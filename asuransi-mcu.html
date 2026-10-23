@@ -1,0 +1,875 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Analisis Klaim</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap">
+<style>
+/* Layout: mirrors loophealth.id — white page, lavender hero band, navy pill buttons, 20px-radius hairline cards, centred section titles, grey footer. Light-only by design. Two funnels: individual (upload MCU) and payer (upload claims). */
+:root{
+  --bg:#ffffff; --hero:#f2f9f8; --foot:#fbfaf8; --ink:#14202b; --ink-2:#2b3a48; --body:#4f5d6a; --muted:#8593a0; --line:#e6ecec;
+  --navy:#0f2a3a; --navy-dark:#163b50; --teal:#2fb8ab; --teal-soft:#e3f6f3; --wa:#25d366;
+  --ok:#2a9d6f; --ok-soft:#dff3ea; --warn:#d99a00; --warn-soft:#fff3cf; --bad:#d9534f; --bad-soft:#fde3e2;
+  --font:'Plus Jakarta Sans',system-ui,sans-serif; color-scheme:light;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--body);font-family:var(--font);font-size:16px;line-height:1.6;padding-inline:16px;padding-block:0 0}
+.wrap{max-width:1100px;margin:0 auto}
+.bleed{margin-inline:-16px;padding-inline:16px}
+.nav{height:85px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.nav img{width:87px;height:40px;display:block}
+.nav .links{display:flex;gap:22px;align-items:center}
+.nav .links a{color:var(--ink-2);text-decoration:none;font-size:16px;font-weight:500}
+.nav .links a.on{color:var(--navy);font-weight:600}.nav .links a.btn{color:#fff}
+@media (max-width:820px){.nav .links a:not(.btn){display:none}}
+.lang{display:inline-flex;border:1.5px solid var(--line);border-radius:999px;overflow:hidden}
+.lang button{font:inherit;font-size:13px;font-weight:700;padding:6px 12px;border:0;background:#fff;color:var(--muted);cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--navy);color:#fff}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:52px;padding:0 24px;border-radius:26px;font:inherit;font-size:16px;font-weight:500;text-decoration:none;cursor:pointer;border:0;white-space:nowrap}
+.btn.primary{background:var(--navy);color:#fff}.btn.primary:hover{background:var(--navy-dark)}
+.btn.secondary{background:#fff;color:var(--navy);border:1.5px solid var(--navy);font-weight:600}
+.btn.wa{background:var(--wa);color:#fff;font-weight:600}
+.btn.sm{height:44px;padding:0 18px;font-size:15px}
+.btn:focus-visible,input:focus-visible,select:focus-visible,button:focus-visible,label.drop:focus-within{outline:2px solid var(--teal);outline-offset:2px}
+.hero{background:var(--hero);padding-block:64px 56px}
+.hero .wrap{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:40px;align-items:center}
+@media (max-width:860px){.hero .wrap{grid-template-columns:1fr}.hero{padding-block:44px 40px}}
+h1{font-size:clamp(34px,5vw,48px);line-height:1.35;font-weight:800;color:var(--ink);margin:0 0 16px;text-wrap:balance}
+.hero p.sub{font-size:20px;font-weight:300;line-height:1.7;color:var(--body);margin:0 0 26px;max-width:52ch}
+.hero .cta{display:flex;flex-wrap:wrap;gap:12px}
+.preview{background:#fff;border:1px solid var(--line);border-radius:20px;padding:22px 22px 18px;box-shadow:0 10px 30px rgba(49,62,114,.08)}
+.preview .pt{font-size:13px;color:var(--muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.preview h3{margin:4px 0 12px;font-size:20px;font-weight:700;color:var(--ink-2)}
+.preview .rows{display:flex;flex-direction:column;gap:8px}
+.preview .r{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;font-size:14px;padding:8px 10px;border-radius:12px;background:var(--hero)}
+.preview .r b{color:var(--ink-2);font-weight:600}
+.preview .r .n{font-variant-numeric:tabular-nums;font-weight:700;color:var(--ink)}
+.chip{display:inline-block;font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;white-space:nowrap;vertical-align:middle}
+.chip.ok::before,.chip.warn::before,.chip.bad::before{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:currentColor;margin-right:6px;vertical-align:1px}
+.mk .v{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.mk .x{font-size:12px;color:var(--body);margin-top:6px;line-height:1.45}
+.rb{position:relative;height:18px;margin:8px 0 4px}.rbt{display:flex;height:6px;border-radius:3px;overflow:hidden;margin-top:6px}.rbt i{display:block;height:100%}.rb b{position:absolute;top:1px;width:16px;height:16px;margin-left:-8px;border-radius:50%;background:#fff;border:3px solid var(--navy);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.verdict .cnt{margin-top:6px;font-size:13px;font-weight:700;opacity:.95}
+.chip.ok{background:var(--ok-soft);color:var(--ok)}.chip.warn{background:var(--warn-soft);color:var(--warn)}.chip.bad{background:var(--bad-soft);color:var(--bad)}.chip.navy{background:var(--hero);color:var(--navy)}
+.preview .pf{margin-top:12px;font-size:13px;color:var(--body);border-top:1px solid var(--line);padding-top:10px}
+section.sec{padding-block:64px 24px}
+h2.center{text-align:center;font-size:clamp(26px,4vw,32px);font-weight:800;color:var(--ink);margin:0 0 32px;text-wrap:balance}
+p.center{text-align:center;font-size:17px;font-weight:300;margin:-20px auto 28px;max-width:64ch}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+@media (max-width:760px){.three{grid-template-columns:1fr}}
+.card{background:#fff;border:1px solid var(--line);border-radius:24px;padding:22px}
+.card h3{font-size:20px;font-weight:700;color:var(--ink-2);margin:0 0 6px}
+.card p{font-size:14px;line-height:1.6;margin:0}
+.tile{width:56px;height:56px;border-radius:16px;background:var(--teal-soft);color:var(--teal);display:grid;place-items:center;font-weight:800;font-size:20px;margin-bottom:14px}
+.tool{max-width:860px;margin:0 auto}
+label.drop{display:block;border:2px dashed var(--teal);border-radius:24px;padding:34px 20px;text-align:center;background:var(--teal-soft);cursor:pointer}
+label.drop.drag{background:#d6f1ee}
+label.drop strong{display:block;font-size:18px;color:var(--ink-2);margin-bottom:6px}
+label.drop span{font-size:14px;color:var(--body)}
+label.drop input{display:none}
+.status{font-size:14px;color:var(--navy);min-height:1.4em;margin-top:10px;white-space:pre-wrap}
+.status.err{color:var(--bad)}
+.actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:18px}
+.readvals{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.readvals span{font-size:12px;background:var(--hero);color:var(--navy);padding:3px 9px;border-radius:999px;font-variant-numeric:tabular-nums}
+.verdict{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center;border-radius:20px;padding:20px;color:#fff;margin-bottom:16px}
+.verdict .dot{width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.22);display:grid;place-items:center;font-size:26px}
+.verdict h2{margin:0;font-size:22px;font-weight:800;color:#fff}
+.verdict p{margin:4px 0 0;font-size:15px;opacity:.95}
+.markers{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-top:4px}
+.mk{border:1px solid var(--line);border-radius:16px;padding:12px 14px;background:#fff;min-width:0}
+.mk .l{font-size:12.5px;color:var(--muted);font-weight:600}
+.mk .v{font-size:22px;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums}
+.mk .n{font-size:12px;color:var(--body);margin-bottom:6px}
+.alert{border-left:4px solid var(--bad);background:var(--bad-soft);border-radius:12px;padding:12px 14px;margin:0 0 14px;font-size:15px;color:var(--ink-2)}
+.alert b{color:var(--bad)}
+h3.sub{font-size:20px;font-weight:700;color:var(--ink-2);margin:22px 0 10px}
+.progs{display:flex;flex-direction:column;gap:12px}
+.prog{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start;border:1px solid var(--line);border-radius:20px;padding:16px 18px;background:#fff}
+.prog .ic{width:48px;height:48px;border-radius:14px;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px}
+.prog b{display:block;font-size:17px;color:var(--ink-2)}
+.prog p{margin:3px 0 0;font-size:14px;line-height:1.6}
+.explain{font-size:14.5px;color:var(--body);margin:12px 0 0;padding-left:18px}
+.explain li{margin-bottom:4px}
+p.note{font-size:14.5px;color:var(--body);margin:12px 0 0}
+/* payer */
+.payer{background:var(--hero);padding-block:64px 56px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:0 0 16px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px 16px;min-width:0}
+.kpi .l{font-size:12.5px;color:var(--muted);font-weight:600}
+.kpi .v{font-size:26px;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums;line-height:1.2}
+.kpi .s{font-size:12.5px;color:var(--body)}
+.bar{display:flex;height:30px;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#fff}
+.bar div{display:grid;place-items:center;color:#fff;font-size:12px;font-weight:700;min-width:0;overflow:hidden;font-variant-numeric:tabular-nums}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--body);margin-top:8px}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:16px;background:#fff}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:620px}
+th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--hero)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:0}
+.map{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-top:12px}
+.map label{font-size:12.5px;font-weight:600;color:var(--ink-2);display:flex;flex-direction:column;gap:4px}
+.map select{font:inherit;font-size:14px;padding:8px 10px;border:1px solid #dcdcdc;border-radius:12px;background:#fff;color:var(--ink)}
+.toggle{display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--body);margin-top:10px}
+.toggle input{accent-color:var(--navy);width:16px;height:16px}
+.leadband{background:var(--hero);padding-block:56px}
+.leadband .wrap{max-width:860px}
+.leadband h2{text-align:center;font-size:clamp(24px,4vw,32px);font-weight:800;color:var(--ink);margin:0 0 8px}
+.leadband p.c{text-align:center;font-size:17px;font-weight:300;margin:0 0 24px}
+.lead-form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:560px){.lead-form{grid-template-columns:1fr}}
+.f{display:flex;flex-direction:column;gap:5px;min-width:0}
+.f label{font-size:13px;color:var(--ink-2);font-weight:600}
+.f input{font:inherit;font-size:16px;padding:11px 14px;border:1px solid #dcdcdc;border-radius:14px;background:#fff;color:var(--ink);width:100%;min-width:0}
+.consent{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--body);margin-top:12px}
+.consent input{margin-top:4px;accent-color:var(--navy);width:16px;height:16px}
+.trust{display:flex;flex-wrap:wrap;justify-content:center;gap:18px;font-size:13px;color:var(--body);margin-top:18px}
+footer{background:var(--foot);padding-block:40px 32px;font-size:14px;color:var(--body)}
+footer .wrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:24px}
+footer b{display:block;color:var(--ink-2);font-size:16px;font-weight:500;margin-bottom:8px}
+footer a{color:var(--body);text-decoration:none;display:block;margin-bottom:4px}
+footer .small{grid-column:1/-1;font-size:12px;color:var(--muted);border-top:1px solid #e3e3e3;padding-top:14px;margin-top:8px}
+.proto{font-size:12px;background:#fffbe6;border-bottom:1px solid #f0e6b0;color:#7a6a1f;padding:6px 16px;text-align:center}
+.wa-float{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--wa);color:#fff;font-weight:600;font-size:15px;height:48px;padding:0 18px;border-radius:24px;display:inline-flex;align-items:center;gap:8px;text-decoration:none;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style></head><body>
+<style>
+/* additions: free upload, member table, report */
+.ways{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}
+@media (max-width:700px){.ways{grid-template-columns:1fr}}
+.way{border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:#fff;font-size:13px;color:var(--body)}
+.way b{display:block;color:var(--ink-2);font-size:14px}
+.notdx{margin-top:14px;padding:12px 14px;border-radius:12px;background:var(--hero);color:var(--ink-2);font-size:14px;line-height:1.55}
+.notdx b{color:var(--navy)}
+label.drop.big{padding:40px 20px}
+label.drop strong.l{font-size:20px}
+.tiers{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.member td .chip{font-size:11px}
+.reportview{border:1px solid var(--line);border-radius:20px;background:#fff;padding:0;overflow:hidden;margin-top:16px}
+.reportview iframe{width:100%;height:70vh;border:0;background:#fff}
+.lead-form.four{grid-template-columns:1fr 1fr}
+.req{color:var(--bad)}
+</style>
+<div class="proto bleed" data-i18n="proto"></div>
+<div class="wrap">
+<nav class="nav"><a href="./" aria-label="Loop Health"><img alt="Loop Health" src="data:image/png;base64,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"></a>
+  <div class="links"><a href="personal.html" data-i18n="nav.personal" id="navPersonal"></a><a href="perusahaan.html" data-i18n="nav.corporate" id="navCorporate"></a><a href="asuransi.html" data-i18n="nav.insurer" id="navInsurer"></a><a href="https://www.loophealth.id/blog">Blog</a><a href="https://www.loophealth.id/diabetes-calculator" data-i18n="nav.risk"></a><a class="on" href="#cek" data-i18n="nav.mcu" id="navMcu"></a><a href="membership.html">Membership</a><div class="lang" role="group" aria-label="Language"><button type="button" id="langId" aria-pressed="true">ID</button><button type="button" id="langEn" aria-pressed="false">EN</button></div><a class="btn primary sm" href="konsultasi.html" data-i18n="nav.consult"></a></div>
+</nav>
+</div>
+
+<section class="hero bleed">
+  <div class="wrap">
+    <div>
+      <h1 data-i18n="hero.h1"></h1>
+      <p class="sub" data-i18n="hero.sub"></p>
+      <div class="cta"><a class="btn primary" href="#cek" data-i18n="hero.upload"></a><button type="button" class="btn secondary" id="heroDemo" data-i18n="hero.demo"></button></div>
+    </div>
+
+
+
+    <div class="preview" aria-hidden="true">
+      <div class="pt" data-i18n="pv.kicker"></div>
+      <h3 data-i18n="pvi.title"></h3>
+      <div class="rows">
+        <div class="r"><b data-i18n="pvi.r1"></b><span class="n">16%</span><span class="chip navy" data-i18n="pvi.c1"></span></div>
+        <div class="r"><b data-i18n="pvi.r2"></b><span class="n">30%</span><span class="chip navy" data-i18n="pvi.c2"></span></div>
+        <div class="r"><b data-i18n="pvi.r3"></b><span class="n">3%</span><span class="chip warn" data-i18n="pvi.c3"></span></div>
+        <div class="r"><b data-i18n="pvi.r4"></b><span class="n">6,1×</span><span class="chip bad" data-i18n="pvi.c4"></span></div>
+      </div>
+      <div class="pf" data-i18n="pvi.foot"></div>
+    </div>
+
+  </div>
+</section>
+
+<div class="wrap">
+<section class="sec" id="cek">
+  <h2 class="center" data-i18n="tool.h2"></h2>
+  <div class="tool">
+  <div class="card">
+    <label class="drop big" id="drop" tabindex="0"><input type="file" id="file" accept=".csv,.xlsx,.xls" multiple><strong class="l" data-i18n="tool.drop"></strong><span data-i18n="tool.dropsub"></span></label>
+    <div class="ways">
+
+
+
+      <div class="way"><b data-i18n="wayi.1t"></b><span data-i18n="wayi.1p"></span></div>
+      <div class="way"><b data-i18n="wayi.2t"></b><span data-i18n="wayi.2p"></span></div>
+      <div class="way"><b data-i18n="wayi.3t"></b><span data-i18n="wayi.3p"></span></div>
+
+    </div>
+    <div class="status" id="status" aria-live="polite"></div>
+    <div class="readvals" id="readvals"></div>
+    <div id="pmap" hidden><p class="note" data-i18n="py.maphelp"></p><div class="map" id="pmapgrid"></div><div class="toggle"><input type="checkbox" id="resp"><label for="resp" data-i18n="py.resp"></label></div><div class="actions"><button class="btn primary sm" type="button" id="prun" data-i18n="py.run"></button></div></div>
+    <div class="notdx" data-i18n="tool.notdx"></div>
+    <div class="actions"><button class="btn secondary sm" type="button" id="demo3" data-i18n="tool.demo3"></button></div>
+  </div>
+  </div>
+</section>
+
+<section class="sec tool" id="results" hidden></section>
+</div>
+
+<div class="wrap">
+<section class="sec" id="example">
+  <h2 class="center" data-i18n="xr.h"></h2>
+  <p class="center" data-i18n="xr.p"></p>
+  <div class="reportview" style="margin-top:0"><iframe id="exampleFrame" title="example report"></iframe></div>
+  <p class="note" style="text-align:center;color:var(--muted)" data-i18n="xr.note"></p>
+</section>
+</div>
+
+<section class="leadband bleed" id="stepLead" hidden>
+  <div class="wrap">
+    <h2 data-i18n="lead.h2"></h2>
+    <p class="c" data-i18n="lead.p"></p>
+    <div class="card">
+      <form id="leadForm" autocomplete="on">
+      <div class="lead-form four">
+        <div class="f"><label for="lname"><span data-i18n="lead.name"></span> <span class="req">*</span></label><input id="lname" type="text" autocomplete="name" required></div>
+        <div class="f"><label for="lemail"><span data-i18n="lead.email"></span> <span class="req">*</span></label><input id="lemail" type="email" inputmode="email" autocomplete="email" required></div>
+        <div class="f"><label for="lwa" data-i18n="lead.wa"></label><input id="lwa" type="tel" inputmode="tel" placeholder="08…" autocomplete="tel"></div>
+        <div class="f"><label for="lco" data-i18n="lead.co"></label><input id="lco" type="text" autocomplete="organization"></div>
+      </div>
+      <label class="consent"><input type="checkbox" id="consent" required> <span data-i18n="lead.consent"></span></label>
+      <div class="actions"><button class="btn primary" type="submit" data-i18n="lead.send"></button><a class="btn wa" id="waBtn" href="https://wa.me/6281112588833" target="_blank" rel="noopener" data-i18n="lead.wabtn"></a></div>
+      <div class="status" id="lstatus" aria-live="polite"></div>
+      </form>
+    </div>
+    <div class="trust"><span data-i18n="lead.t1"></span><span data-i18n="lead.t2"></span><span data-i18n="lead.t3"></span></div>
+    <div id="reportView" hidden></div>
+  </div>
+</section>
+
+
+
+
+<div class="wrap">
+<section class="sec" id="b2b">
+  <h2 class="center" data-i18n="b2bi.h2"></h2>
+  <p class="center" data-i18n="b2bi.sub"></p>
+  <div class="three">
+    <div class="card"><div class="tile">A</div><h3 data-i18n="b2bi.t1"></h3><p data-i18n="b2bi.p1"></p></div>
+    <div class="card"><div class="tile">B</div><h3 data-i18n="b2bi.t2"></h3><p data-i18n="b2bi.p2"></p></div>
+    <div class="card"><div class="tile">Rp</div><h3 data-i18n="b2bi.t3"></h3><p data-i18n="b2bi.p3"></p></div>
+  </div>
+  <div class="card" style="text-align:center;margin-top:20px"><h3 data-i18n="xli.h"></h3><p data-i18n="xli.p"></p><div class="actions" style="justify-content:center"><a class="btn secondary sm" href="bisnis-mcu.html" data-i18n="xl.btnc"></a><a class="btn secondary sm" href="cek-mcu.html" data-i18n="xlb.btn"></a></div></div>
+</section>
+</div>
+
+
+<footer class="bleed">
+  <div class="wrap">
+    <div><b data-i18n="ft.sol"></b><a href="https://www.loophealth.id/loop-personal" data-i18n="nav.personal"></a><a href="https://www.loophealth.id/loop-partners" data-i18n="nav.business"></a><a href="https://www.loophealth.id/loop-partners" data-i18n="ft.corp"></a></div>
+    <div><b data-i18n="ft.about"></b><a href="https://www.loophealth.id/loop-membership">Enrollment</a><a href="https://www.loophealth.id/blog">Blog</a></div>
+    <div><b data-i18n="ft.contact"></b><a href="https://www.loophealth.id/">hello@loophealth.id</a><a href="https://wa.me/6281112588833">+62 811 1258 8833</a></div>
+    <div><b>Loop Health HQ</b>GoWork - Pacific Place, Lantai 1, Room 125. Jl. Jend. Sudirman Kav. 52-53, SCBD, Jakarta Selatan 12190</div>
+    <div class="small" data-i18n="ft.disc"></div>
+  </div>
+</footer>
+<a class="wa-float" id="waFloat" href="https://wa.me/6281112588833" target="_blank" rel="noopener" data-i18n="wa.float"></a>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+
+/* ======================= REFERENCE DATA ======================= */
+const DX=[
+ ['dm','Diabetes (E10–E14) diagnosed'],['t1','Type 1 DM / insulin-pump'],['predm','Prediabetes / GDM history'],['htn','Hypertension (I10) diagnosed'],
+ ['dyslip','Dyslipidaemia (E78) diagnosed'],['ihd','Stable IHD (I25) · cardiologist clearance'],['mi90','MI / stroke / PCI / CABG within 90 days'],
+ ['cvevent','Prior MI / stroke (>90 days, cleared)'],['hf12','Heart failure NYHA I–II'],['hf34','Heart failure NYHA III–IV'],['af','AF · stable, rate-controlled'],
+ ['afnew','AF · new-onset / unstable'],['ckd','CKD on file'],['nafld','NAFLD on file'],['hypothy','Hypothyroidism on file'],['copd','COPD diagnosed (spirometry)'],
+ ['asthma','Asthma diagnosed'],['mdd','Depression on file'],['anx','Anxiety on file'],['cancer','Active cancer treatment'],['bipolar','Bipolar / psychosis'],
+ ['gout','Gout ≥2 attacks/yr or tophi']
+];
+const MEDS=[
+ ['insulin','A10A insulin'],['oad','A10B oral antidiabetic (metformin, SU, DPP-4)'],['glp','GLP-1 / SGLT2 (external Rx)'],['antihtn','C02/03/07/08/09 antihypertensive'],
+ ['statin','C10 statin / lipid-lowering'],['anticoag','B01 warfarin / DOAC'],['levo','H03 levothyroxine'],['inhaler','R03 ICS / LABA / LAMA'],['ssri','N06 SSRI / SNRI'],['steroid','High-dose glucocorticoid']
+];
+const EXCL=[
+ ['preg','Pregnant or <4 weeks postpartum'],['ed','Eating disorder <12 months'],['tx','Organ transplant <6 months'],['bari','Bariatric surgery <6 months'],
+ ['dialysis','On dialysis'],['dka','DKA or severe hypoglycaemia <30 days'],['panc','Acute pancreatitis'],['sud','Substance-use disorder (with anxiety)']
+];
+const TIERS={
+ red:{n:'Red · Critical',c:'var(--t-red)',s:'var(--t-red-soft)',a:'Same-day GP contact · urgent referral where flagged · monthly visits once enrolled'},
+ amber:{n:'Amber · Very high',c:'var(--t-amber)',s:'var(--t-amber-soft)',a:'Enrol in every qualifying program · monthly visits until target · GP owns case'},
+ yellow:{n:'Yellow · High',c:'var(--t-yellow)',s:'var(--t-yellow-soft)',a:'Enrol in qualifying program · quarterly cadence · dedicated GP'},
+ lime:{n:'Lime · Moderate',c:'var(--t-lime)',s:'var(--t-lime-soft)',a:'Prevention arm (DPP) · lifestyle-first · 3 doctor visits in year one'},
+ green:{n:'Green · Low',c:'var(--t-green)',s:'var(--t-green-soft)',a:'Annual MCU · preventive scope · app wellness content'}
+};
+const PROGRAMS=[
+ {code:'DPP',name:'Diabetes Prevention Program',tier:'Tier 1',icd:'R73 · E66'},
+ {code:'DMP',name:'Diabetes Management Program',tier:'Tier 1',icd:'E11'},
+ {code:'HMP',name:'Hypertension Management Program',tier:'Tier 1',icd:'I10'},
+ {code:'CMP',name:'Cardiometabolic Management Program',tier:'Tier 2',icd:'I11 · I12 · I25 · I48 · I50 · E78'},
+ {code:'LKMP',name:'Liver + Kidney + Thyroid Management',tier:'Tier 2',icd:'K76.0 · N18.1–3 · E03/E04'},
+ {code:'WMP',name:'Wellness Management Program',tier:'Tier 2',icd:'J44 · J45 · F32/F33 · F41'}
+];
+const SRC={elig:'Eligibility v3',proto:'Protocol 2.2 (dr. William)',ref:'Clinical Reference Jun26',scan:'MCU Scanner May26',ncd:'NCD Guidelines SOP',icd:'ICD-10 Scope Jun26',blood:'Blood Frequency Matrix'};
+
+/* ======================= HELPERS ======================= */
+const num=v=>(v===''||v===null||v===undefined||isNaN(+v))?null:+v;
+const r1=v=>Math.round(v*10)/10;
+function egfr(scr,age,sex){ if(scr==null||age==null) return null; const f=sex==='F'; const k=f?0.7:0.9, a=f?-0.241:-0.302; const r=scr/k; const v=142*Math.pow(Math.min(r,1),a)*Math.pow(Math.max(r,1),-1.2)*Math.pow(0.9938,age)*(f?1.012:1); return Math.round(v); }
+function fib4(age,ast,alt,plt){ if(age==null||ast==null||alt==null||plt==null||alt<=0||plt<=0) return null; return Math.round((age*ast)/(plt*Math.sqrt(alt))*100)/100; }
+function ascvd(p){ // Pooled Cohort Equations (2013), non-Hispanic white coefficients. Not calibrated for Indonesia: indicative only.
+  const {age,sex,tc,hdl,sbp,onHtn,smoker,dm}=p; if(age==null||tc==null||hdl==null||sbp==null||age<40||age>79) return null;
+  const la=Math.log(age),ltc=Math.log(tc),lh=Math.log(hdl),ls=Math.log(sbp); let s,base,mean;
+  if(sex==='F'){ s=-29.799*la+4.884*la*la+13.540*ltc-3.114*la*ltc-13.578*lh+3.149*la*lh+(onHtn?2.019:1.957)*ls+(smoker?7.574-1.665*la:0)+(dm?0.661:0); base=0.9665; mean=-29.18; }
+  else { s=12.344*la+11.853*ltc-2.664*la*ltc-7.990*lh+1.769*la*lh+(onHtn?1.797:1.764)*ls+(smoker?7.837-1.795*la:0)+(dm?0.658:0); base=0.9144; mean=61.18; }
+  return Math.round((1-Math.pow(base,Math.exp(s-mean)))*1000)/10;
+}
+function bmiCat(b){ if(b==null) return null; if(b<18.5) return ['Underweight','yellow']; if(b<23) return ['Normal (18.5–22.9)','green']; if(b<25) return ['Overweight (23–24.9 · Asian)','yellow']; if(b<30) return ['Obese I (25–29.9 · Asian)','amber']; if(b<35) return ['Obese II (30–34.9)','amber']; return ['Severe obesity (≥35)','red']; }
+
+/* ======================= ENGINE ======================= */
+function analyze(p){
+  const R={flags:[],findings:[],programs:{},exclusions:[],referrals:[],protocol:[],patient:[],derived:{},drivers:[]};
+  const has=k=>!!p.dx[k], med=k=>!!p.meds[k], ex=k=>!!p.excl[k];
+  const F=p.sex==='F';
+  // ---- derived
+  const bmi=(p.height&&p.weight)?r1(p.weight/Math.pow(p.height/100,2)):null; R.derived.bmi=bmi; R.derived.bmiCat=bmiCat(bmi);
+  const eg=egfr(p.creat,p.age,p.sex); R.derived.egfr=eg;
+  const fb=fib4(p.age,p.ast,p.alt,p.plt); R.derived.fib4=fb;
+  const nonhdl=(p.tc!=null&&p.hdl!=null)?p.tc-p.hdl:null; R.derived.nonhdl=nonhdl;
+  const sbp=p.sbp,dbp=p.dbp;
+  const waistHigh=p.waist!=null&&(F?p.waist>=80:p.waist>=90);
+  const anyDM=has('dm')||has('t1')||med('insulin')||med('oad')||med('glp');
+  const glyDM=(p.hba1c!=null&&p.hba1c>=6.5)||(p.fpg!=null&&p.fpg>=126)||(p.ogtt!=null&&p.ogtt>=200)||(p.rbg!=null&&p.rbg>=200&&p.dmsym);
+  const isDM=anyDM||glyDM;
+  const preDM=!isDM&&((p.hba1c!=null&&p.hba1c>=5.7&&p.hba1c<6.5)||(p.fpg!=null&&p.fpg>=100&&p.fpg<126)||(p.ogtt!=null&&p.ogtt>=140&&p.ogtt<200));
+  const bpHigh=sbp!=null&&dbp!=null&&(sbp>=140||dbp>=90);
+  const homeHigh=p.hsbp!=null&&p.hdbp!=null&&(p.hsbp>=135||p.hdbp>=85);
+  const htnDx=has('htn')||med('antihtn');
+  const htnConfirmed=htnDx||homeHigh||(bpHigh&&p.bpconf);
+  const htnCandidate=!htnConfirmed&&bpHigh;
+  const bpElevated=!bpHigh&&sbp!=null&&dbp!=null&&((sbp>=130&&sbp<140)||(dbp>=85&&dbp<90));
+  const dyslipLab=(p.ldl!=null&&p.ldl>130)||(p.hdl!=null&&(F?p.hdl<50:p.hdl<40))||(p.tg!=null&&p.tg>=150)||(p.tc!=null&&p.tc>200)||(nonhdl!=null&&nonhdl>160);
+  const dyslip=dyslipLab||has('dyslip')||med('statin');
+  const altHigh=p.alt!=null&&p.alt>40, astHigh=p.ast!=null&&p.ast>40;
+  const alcoholOK=p.alcohol==null||(F?p.alcohol<20:p.alcohol<30);
+  const nafld=(has('nafld')||((altHigh||astHigh)&&p.usg==='steatosis'))&&alcoholOK;
+  const ckdStage=eg==null?null:(eg>=90?1:eg>=60?2:eg>=45?'3a':eg>=30?'3b':eg>=15?4:5);
+  const albumin=(p.uacr!=null&&p.uacr>=30)||p.uprot==='pos';
+  const ckd13=(eg!=null&&eg>=30&&eg<90&&albumin)||(eg!=null&&eg>=30&&eg<60)||(has('ckd')&&(eg==null||eg>=30));
+  const hypo=(p.tsh!=null&&(p.tsh>=10||(p.tsh>=4.5&&p.tsh<10&&(p.thysym||p.tpo))))||has('hypothy')||med('levo');
+  const copd=has('copd')||(p.fev!=null&&p.fev<0.7);
+  const asthma=has('asthma')||(p.rev!=null&&p.rev>=12&&!(p.fev!=null&&p.fev<0.7));
+  const si=p.phq9||p.siplan;
+  const mets=[];
+  if(waistHigh) mets.push('waist ≥90/80');
+  if((p.tg!=null&&p.tg>=150)||med('statin')) mets.push('TG ≥150');
+  if(p.hdl!=null&&(F?p.hdl<50:p.hdl<40)) mets.push('HDL low');
+  if((sbp!=null&&dbp!=null&&(sbp>=130||dbp>=85))||htnDx) mets.push('BP ≥130/85');
+  if((p.fpg!=null&&p.fpg>=100)||isDM) mets.push('FBG ≥100');
+  R.derived.mets=mets;
+  const risk=ascvd({age:p.age,sex:p.sex,tc:p.tc,hdl:p.hdl,sbp,onHtn:med('antihtn'),smoker:p.smoker==='current',dm:isDM}); R.derived.ascvd=risk;
+  const establishedCVD=has('ihd')||has('cvevent')||has('mi90')||p.ecg==='mi';
+
+  const flag=(level,text,action,src)=>R.flags.push({level,text,action,src});
+  const refer=(to,why,urg)=>R.referrals.push({to,why,urg});
+  // ---- red flags (critical values)
+  if(p.fpg!=null&&(p.fpg>=250||p.fpg<=60)) flag('red',`Fasting glucose ${p.fpg} mg/dL`,'Same-day GP callback · DKA / HHS / hypoglycaemia workup',SRC.scan);
+  if(p.rbg!=null&&p.rbg>=300) flag('red',`Random glucose ${p.rbg} mg/dL`,'Same-day GP callback · DKA / HHS workup',SRC.scan);
+  if(p.hba1c!=null&&p.hba1c>=13) flag('red',`HbA1c ${p.hba1c}%`,'GP visit within 48 h · likely insulin · endocrinology referral',SRC.scan);
+  if(sbp!=null&&dbp!=null&&(sbp>=180||dbp>=120)){ flag('red',`BP ${sbp}/${dbp}${p.bpsym?' with symptoms':''}`,p.bpsym?'Hypertensive emergency · ER (Eka BSD / Harapan Kita) now':'Hypertensive urgency · immediate GP review · ER if not responding',SRC.ncd); refer('ER',`BP ≥180/120${p.bpsym?' + symptoms':''}`,'same day'); }
+  else if(sbp!=null&&dbp!=null&&(sbp>=180||dbp>=110)&&p.bpsym){ flag('red',`BP ${sbp}/${dbp} with symptoms`,'Hypertensive emergency · refer ER',SRC.scan); refer('ER','BP ≥180/110 with symptoms','same day'); }
+  if(p.k!=null&&(p.k<3.0||p.k>5.5)){ flag('red',`Potassium ${p.k} mmol/L`,'Same-day GP callback · arrhythmia risk · repeat + ECG',SRC.scan); if(p.k>5.5) refer('Nephrology','Refractory hyperkalaemia K⁺ >5.5','urgent'); }
+  if(eg!=null&&eg<30){ flag('red',`eGFR ${eg} mL/min/1.73m² (CKD stage ${ckdStage})`,'Urgent nephrology referral · dialysis planning · not Pratama scope',SRC.elig); refer('Nephrology','eGFR <30 · CKD stage 4–5','urgent'); }
+  if((p.alt!=null&&p.alt>200)||(p.ast!=null&&p.ast>200)) { flag('red',`ALT ${p.alt??'—'} / AST ${p.ast??'—'} U/L (>5× ULN)`,'Same-day GP callback · acute hepatitis workup · stop hepatotoxic drugs',SRC.scan); refer('Hepatology','Transaminases >5× ULN','urgent'); }
+  if(p.hb!=null&&p.hb<8) flag('red',`Hb ${p.hb} g/dL`,'Same-day GP callback · severe anaemia workup',SRC.scan);
+  if(p.plt!=null&&p.plt<50) flag('red',`Platelets ${p.plt} ×10⁹/L`,'Same-day GP callback · thrombocytopenia workup',SRC.scan);
+  if(p.wbc!=null&&(p.wbc>20||p.wbc<2)) flag('red',`WBC ${p.wbc} ×10⁹/L`,'Same-day GP callback · infection / malignancy workup',SRC.scan);
+  if(p.tg!=null&&p.tg>=1000){ flag('red',`Triglycerides ${p.tg} mg/dL`,'Urgent visit · pancreatitis risk · fenofibrate · internist',SRC.ref); refer('Internist / ER','TG ≥1000 · pancreatitis risk','urgent'); }
+  if(p.cxr==='mass'){ flag('red','Chest X-ray: mass / nodule','Urgent oncology / pulmonology referral',SRC.scan); refer('Oncology (Dharmais / Eka BSD)','Suspicious lesion on chest X-ray','urgent'); }
+  if(p.phq9||p.siplan){ flag('red',p.siplan?'Suicidal ideation with plan / intent':'PHQ-9 item 9 positive','Immediate GP / coach contact · safety plan · same-day psychiatry',SRC.scan); refer('Psychiatry',p.siplan?'Active suicidal ideation with plan':'PHQ-9 item 9 positive','same day'); }
+  else if(p.phq!=null&&p.phq>=20){ flag('red',`PHQ-9 ${p.phq} (severe)`,'Psychiatry referral within 1 week · not WMP-managed',SRC.elig); refer('Psychiatry','PHQ-9 ≥20','within 1 week'); }
+  if(p.ecg==='af'&&!has('af')){ flag('red','ECG: atrial fibrillation, not previously known','Cardiology · echo + anticoagulation decision',SRC.ref); refer('Cardiology','New AF on MCU ECG','urgent'); }
+  if(p.ecg==='mi'&&!has('cvevent')&&!has('ihd')){ flag('amber','ECG: Q waves / prior MI pattern, no history on file','Cardiology review before CMP enrolment',SRC.scan); refer('Cardiology','Unexplained infarct pattern on ECG','within 2 weeks'); }
+  if(p.ecg==='isch'){ flag('amber','ECG: ST-T ischaemic change','GP same week · cardiology if symptomatic',SRC.icd); refer('Cardiology','Ischaemic ECG change','within 2 weeks'); }
+  if(p.hbsag||p.hcv){ flag('amber',`${p.hbsag?'HBsAg':''}${p.hbsag&&p.hcv?' + ':''}${p.hcv?'anti-HCV':''} positive`,'Hepatology / infectious referral · excluded from NAFLD pathway',SRC.ref); refer('Hepatology',`Viral hepatitis serology positive`,'routine'); }
+  if(fb!=null&&fb>=2.67){ flag('amber',`FIB-4 ${fb} (≥2.67)`,'Hepatology for elastography / biopsy · not LKMP-managed',SRC.elig); refer('Hepatology','FIB-4 ≥2.67 advanced fibrosis likely','within 4 weeks'); }
+  if(p.hba1c!=null&&p.hba1c>=9.5&&p.hba1c<13){ flag('amber',`HbA1c ${p.hba1c}% (≥9.5)`,'Refer for insulin evaluation · continues DMP under co-management',SRC.ncd); refer('Endocrinology','HbA1c ≥9.5% · insulin candidate','within 2 weeks'); }
+  if(p.ldl!=null&&p.ldl>=190){ flag('amber',`LDL ${p.ldl} mg/dL (≥190)`,'High-intensity statin (atorvastatin, reserved) · FH workup',SRC.ncd); refer('Lipid clinic / cardiology','LDL ≥190 · suspect familial hypercholesterolaemia','routine'); }
+  if(p.tsh!=null&&p.tsh<0.4){ flag('amber',`TSH ${p.tsh} (suppressed)`,'Hyperthyroidism · endocrinology',SRC.elig); refer('Endocrinology','TSH suppressed','routine'); }
+  if(p.goiter==='nodule'){ flag('amber','Thyroid nodule on palpation','Ultrasound via Prodia · endocrinology FNA if TIRADS ≥4',SRC.elig); }
+  if(p.stopbang!=null&&p.stopbang>=3) flag('amber',`STOP-BANG ${p.stopbang} (≥3)`,'OSA suspicion · sleep clinic referral for HSAT',SRC.ref);
+  if(p.ua!=null&&p.ua>9&&ckd13) flag('amber',`Uric acid ${p.ua} with CKD`,'Start allopurinol per gout SOP · target <6',SRC.scan);
+  if(p.tsh!=null&&p.tsh>=4.5&&p.tsh<10&&!p.thysym&&!p.tpo) flag('yellow',`TSH ${p.tsh} (4.5–10, asymptomatic)`,'Repeat TSH + TPO in 6–8 weeks before LKMP',SRC.elig);
+
+  // ---- exclusions (shared + program-specific)
+  const X=R.exclusions;
+  if(ex('preg')) X.push({rule:'Pregnant or <4 weeks postpartum',route:'OB-GYN (HTN protocol if hypertensive · maternal medicine if diabetic)',recheck:'4 weeks postpartum'});
+  if(ex('ed')) X.push({rule:'Eating disorder within 12 months',route:'Psychiatry / eating-disorder team',recheck:'12 months from last episode'});
+  if(has('mi90')) X.push({rule:'CV event within 90 days without cardiologist clearance',route:'Cardiology · CMP once clearance documented',recheck:'90 days post-event'});
+  if(ex('tx')) X.push({rule:'Organ transplant within 6 months',route:'Transplant team',recheck:'6 months post-transplant'});
+  if(has('cancer')) X.push({rule:'Active major cancer treatment',route:'Oncology partner (Dharmais)',recheck:'On treatment completion'});
+  if(ex('bari')) X.push({rule:'Bariatric surgery within 6 months',route:'Bariatric team',recheck:'6 months post-op'});
+  if(ex('dialysis')||(eg!=null&&eg<30)) X.push({rule:'Dialysis or eGFR <30',route:'Nephrology',recheck:'—'});
+  if(p.siplan) X.push({rule:'Active suicidal ideation with plan or intent',route:'Psychiatry · same day',recheck:'On psychiatric clearance'});
+  if(has('t1')) X.push({rule:'Type 1 DM / insulin pump',route:'Endocrinology',recheck:'—',prog:'DMP'});
+  if(ex('panc')) X.push({rule:'Acute pancreatitis',route:'Internist',recheck:'On recovery',prog:'DMP'});
+  if(ex('dka')) X.push({rule:'DKA or severe hypoglycaemia within 30 days',route:'Endocrinology review',recheck:'30 days',prog:'DMP'});
+  if(med('steroid')) X.push({rule:'High-dose glucocorticoids affecting glycaemia',route:'GP review of steroid indication',recheck:'On taper',prog:'DMP'});
+  if(has('hf34')) X.push({rule:'Heart failure NYHA III–IV',route:'Cardiology',recheck:'On stabilisation',prog:'CMP'});
+  if(has('afnew')) X.push({rule:'New-onset / unstable AF',route:'Cardiology · rhythm assessment',recheck:'On rate control + anticoagulation',prog:'CMP'});
+  if(fb!=null&&fb>=2.67) X.push({rule:'FIB-4 ≥2.67',route:'Hepatology',recheck:'On elastography result',prog:'LKMP'});
+  if(p.tsh!=null&&p.tsh<0.4) X.push({rule:'Hyperthyroidism (TSH suppressed)',route:'Endocrinology',recheck:'On euthyroid',prog:'LKMP'});
+  if(has('bipolar')) X.push({rule:'Bipolar / psychosis',route:'Psychiatry',recheck:'—',prog:'WMP'});
+  if(p.phq!=null&&p.phq>=20) X.push({rule:'PHQ-9 ≥20',route:'Psychiatry',recheck:'On remission <20',prog:'WMP'});
+  if(p.phq9&&!p.siplan) X.push({rule:'PHQ-9 item 9 positive · suicide-positive screen is not WMP-managed',route:'Psychiatry · same day',recheck:'On psychiatric clearance',prog:'WMP'});
+  if(ex('sud')) X.push({rule:'Anxiety with substance-use comorbidity',route:'Addiction medicine',recheck:'—',prog:'WMP'});
+  if(p.fev!=null&&p.fev<0.7&&p.rev==null&&false){}
+  const sharedExcl=X.filter(x=>!x.prog).length>0;
+  const progExcl=c=>X.some(x=>x.prog===c);
+  if(p.age!=null&&p.age<18) X.unshift({rule:'Under 18 · adults only at M0',route:'Pediatric partner clinic',recheck:'Age 18'});
+
+  // ---- program eligibility (v3 six-program grid)
+  const P=R.programs; const mk=(status,reasons)=>({status,reasons});
+  const adult=p.age==null||p.age>=18;
+  // DMP
+  { const rs=[]; if(p.hba1c!=null&&p.hba1c>=6.5) rs.push(`HbA1c ${p.hba1c}% ≥6.5`); if(p.fpg!=null&&p.fpg>=126) rs.push(`FPG ${p.fpg} ≥126`); if(p.ogtt!=null&&p.ogtt>=200) rs.push(`OGTT ${p.ogtt} ≥200`); if(p.rbg!=null&&p.rbg>=200&&p.dmsym) rs.push(`Random ${p.rbg} ≥200 + symptoms`); if(has('dm')) rs.push('Diagnosis E10–E14 on file'); if(med('insulin')||med('oad')||med('glp')) rs.push('On A10 antidiabetic');
+    P.DMP=rs.length&&adult?mk(progExcl('DMP')?'excl':'yes',rs):mk('no',[]); }
+  // DPP
+  { const rs=[]; const bmiOK=bmi!=null&&bmi>23;
+    if(!isDM){ if(p.hba1c!=null&&p.hba1c>=5.7&&p.hba1c<6.5) rs.push(`HbA1c ${p.hba1c}% (5.7–6.4)`); if(p.fpg!=null&&p.fpg>=100&&p.fpg<126) rs.push(`FPG ${p.fpg} (100–125)`); if(p.ogtt!=null&&p.ogtt>=140&&p.ogtt<200) rs.push(`OGTT ${p.ogtt} (140–199)`); if(has('predm')) rs.push('Self-reported prediabetes / GDM');
+      if(bmi!=null&&bmi>=25&&(htnConfirmed||htnCandidate||dyslip||nafld)) rs.push(`BMI ${bmi} ≥25 + metabolic comorbidity (E66 preventive arm)`);
+      if(bmi!=null&&bmi>27&&waistHigh&&!rs.length) rs.push(`BMI ${bmi} >27 + waist ${p.waist} cm (risk-screen proxy)`); }
+    let st='no'; if(rs.length&&adult){ st=bmiOK?'yes':'cand'; if(!bmiOK) rs.push(bmi==null?'BMI missing · needs BMI >23':`BMI ${bmi} is not >23 · GP judgement`); }
+    P.DPP=mk(st,rs); }
+  // HMP
+  { const rs=[]; if(bpHigh&&p.bpconf) rs.push(`Office BP ${sbp}/${dbp} confirmed on 2 occasions`); if(homeHigh) rs.push(`Home BP ${p.hsbp}/${p.hdbp} ≥135/85`); if(has('htn')) rs.push('Diagnosis I10 on file'); if(med('antihtn')) rs.push('On antihypertensive (C02/03/07/08/09)');
+    let st='no'; if(rs.length&&adult) st='yes'; else if(htnCandidate&&adult){ st='cand'; rs.push(`Office BP ${sbp}/${dbp} ≥140/90 · single reading · confirm at 2nd visit or 7-day home log`); }
+    P.HMP=mk(st,rs); }
+  // CMP
+  { const rs=[]; if((htnConfirmed||htnCandidate)&&p.ecg==='lvh') rs.push('I11 hypertensive heart disease (HTN + LVH on ECG)'); if((htnConfirmed||htnCandidate)&&((eg!=null&&eg>=30&&eg<60)||albumin)) rs.push('I12 hypertensive CKD (HTN + eGFR 30–60 or UACR ≥30)'); if(has('ihd')||(has('cvevent'))) rs.push('I25 stable IHD / post-event with clearance'); if(has('hf12')) rs.push('I50 heart failure NYHA I–II'); if(has('af')) rs.push('I48 stable AF on anticoagulation');
+    const dl=[]; if(p.ldl!=null&&p.ldl>130) dl.push(`LDL ${p.ldl} >130`); if(p.hdl!=null&&(F?p.hdl<50:p.hdl<40)) dl.push(`HDL ${p.hdl} low`); if(p.tg!=null&&p.tg>=150) dl.push(`TG ${p.tg} ≥150`); if(p.tc!=null&&p.tc>200) dl.push(`TC ${p.tc} >200`); if(nonhdl!=null&&nonhdl>160) dl.push(`non-HDL ${nonhdl} >160`); if(med('statin')) dl.push('on C10 statin'); if(has('dyslip')) dl.push('E78 on file');
+    if(dl.length) rs.push('E78 dyslipidaemia: '+dl.join(' · '));
+    P.CMP=rs.length&&adult?mk(progExcl('CMP')?'excl':'yes',rs):mk('no',[]); }
+  // LKMP
+  { const rs=[]; if(nafld){ rs.push(`K76.0 NAFLD: ${altHigh?'ALT '+p.alt:''}${altHigh&&astHigh?' / ':''}${astHigh?'AST '+p.ast:''}${p.usg==='steatosis'?' + steatosis on ultrasound':''}${fb!=null?' · FIB-4 '+fb:''}`); }
+    else if((altHigh||astHigh)&&p.usg!=='steatosis'&&!p.hbsag&&!p.hcv&&alcoholOK) rs.push(`Raised ${altHigh?'ALT '+p.alt:'AST '+p.ast} without imaging · order liver ultrasound (Prodia) · candidate K76.0`);
+    if(ckd13) rs.push(`N18 CKD stage ${ckdStage}: eGFR ${eg}${albumin?' + albuminuria':''}`);
+    if(hypo) rs.push(`E03 hypothyroidism: ${p.tsh!=null?'TSH '+p.tsh:''}${med('levo')?' on levothyroxine':''}${has('hypothy')?' on file':''}`);
+    if(p.goiter==='goiter'&&(p.tsh==null||(p.tsh>=0.4&&p.tsh<4.5))) rs.push('E04 non-toxic goiter · ultrasound to confirm TIRADS ≤3');
+    const onlyCand=rs.length&&rs.every(r=>r.startsWith('Raised'));
+    P.LKMP=rs.length&&adult?mk(progExcl('LKMP')?'excl':(onlyCand?'cand':'yes'),rs):mk('no',[]); }
+  // WMP
+  { const rs=[]; if(copd) rs.push(`J44 COPD${p.fev!=null?' · FEV1/FVC '+p.fev:''}`); if(asthma) rs.push(`J45 asthma${p.rev!=null?' · reversibility '+p.rev+'%':''}`);
+    if(!si&&p.phq!=null&&p.phq>=10&&p.phq<20) rs.push(`F32/F33 depression · PHQ-9 ${p.phq} (moderate)`); else if(has('mdd')||(med('ssri')&&!si)) rs.push('MDD on file / SSRI maintenance');
+    if(p.gad!=null&&p.gad>=10) rs.push(`F41 anxiety · GAD-7 ${p.gad}`); else if(has('anx')) rs.push('Anxiety disorder on file');
+    if(med('inhaler')&&!copd&&!asthma) rs.push('On R03 inhaler · confirm diagnosis with spirometry');
+    P.WMP=rs.length&&adult?mk(progExcl('WMP')?'excl':'yes',rs):mk('no',[]); }
+  if(sharedExcl){ for(const c of Object.keys(P)) if(P[c].status==='yes'||P[c].status==='cand') P[c].status='excl'; }
+  const enrolled=Object.keys(P).filter(c=>P[c].status==='yes');
+  const candidates=Object.keys(P).filter(c=>P[c].status==='cand');
+  R.capitation=enrolled.length>0;
+
+  // ---- stage ladders (NCD guidelines)
+  const S=R.findings; const st=(domain,value,stage,color,text)=>S.push({domain,value,stage,color,text});
+  if(p.hba1c!=null||p.fpg!=null){ const a=p.hba1c; const v=a!=null?`HbA1c ${a}%`:`FPG ${p.fpg}`;
+    if(isDM){ if(a!=null&&a>=9.5) st('Glucose',v,'T2D uncontrolled','red','Refer for insulin evaluation'); else if(a!=null&&a>=7) st('Glucose',v,'T2D suboptimal','amber','Titrate formulary · HbA1c monthly until target'); else st('Glucose',v,'T2D controlled','amber','Continue · HbA1c every 3–6 months'); }
+    else if(preDM) st('Glucose',v,'Prediabetes','yellow','Lifestyle program · OGTT if HbA1c near 6.5');
+    else st('Glucose',v,'Normal','green','Annual screening'); }
+  if(sbp!=null&&dbp!=null){ const v=`${sbp}/${dbp}`; if(sbp>=180||dbp>=120) st('Blood pressure',v,'Crisis','red','Immediate referral'); else if(sbp>=160||dbp>=100) st('Blood pressure',v,'Severe HTN','red','Dual therapy · monthly follow-up'); else if(sbp>=140||dbp>=90) st('Blood pressure',v,'Stage 2','amber','Start Rx now (amlodipine first line)'); else if(sbp>=130||dbp>=80) st('Blood pressure',v,'Stage 1 / elevated','yellow','Lifestyle · recheck 3 months'); else if(sbp>=120) st('Blood pressure',v,'Elevated','yellow','Lifestyle · recheck'); else st('Blood pressure',v,'Normal','green','Annual screen'); }
+  if(bmi!=null){ const c=R.derived.bmiCat; st('BMI',`${bmi}`,c[0],c[1],mets.length>=3?`Metabolic syndrome (${mets.length}/5)`:`MetS criteria ${mets.length}/5`); }
+  if(p.ldl!=null){ const v=`LDL ${p.ldl}`; if(p.ldl>=190) st('Lipids',v,'Very high','red','High-intensity statin · FH workup'); else if(p.ldl>=160) st('Lipids',v,'High','amber','Statin start + lifestyle'); else if(p.ldl>=130) st('Lipids',v,'Borderline high','amber','Lifestyle 3–6 mo · treat if ASCVD ≥7.5%'); else if(p.ldl>=100) st('Lipids',v,'Near-optimal','yellow','Lifestyle · yearly'); else st('Lipids',v,'Optimal','green','Re-screen 5 yr'); }
+  if(eg!=null){ const v=`eGFR ${eg}`; if(eg<30) st('Kidney',v,`CKD ${ckdStage}`,'red','Nephrology'); else if(eg<60) st('Kidney',v,`CKD ${ckdStage}`,'amber','LKMP · BP <130/80 · repeat creatinine 3 mo'); else if(albumin) st('Kidney',v,`CKD ${ckdStage} (A2+)`,'amber','Albuminuria · ACE-i/ARB · LKMP'); else st('Kidney',v,'Normal','green','Annual creatinine + ACR'); }
+  if(p.alt!=null||p.ast!=null){ const v=`ALT ${p.alt??'—'} · AST ${p.ast??'—'}`; if(altHigh||astHigh) st('Liver',v,nafld?'NAFLD':'Raised transaminases',fb!=null&&fb>=2.67?'red':'amber',fb!=null?`FIB-4 ${fb}`:'Order ultrasound + platelets for FIB-4'); else st('Liver',v,'Normal','green','Baseline · annual on statin'); }
+  if(p.phq!=null){ const v=`PHQ-9 ${p.phq}`; if(si||p.phq>=20) st('Mood',v,'Severe / safety','red','Same-day escalation'); else if(p.phq>=10) st('Mood',v,'Moderate','amber','WMP · GP-initiated SSRI or refer'); else if(p.phq>=5) st('Mood',v,'Mild','yellow','Coach + GP watchful · reassess 2–4 wk'); else st('Mood',v,'Minimal','green','Rescreen quarterly'); }
+  if(p.gad!=null){ const v=`GAD-7 ${p.gad}`; if(p.gad>=15) st('Anxiety',v,'Severe','red','Psychiatry within 1 week'); else if(p.gad>=10) st('Anxiety',v,'Moderate','amber','WMP'); else if(p.gad>=5) st('Anxiety',v,'Mild','yellow','Coach + watchful'); else st('Anxiety',v,'Minimal','green','Rescreen quarterly'); }
+  if(p.smoker==='current') st('Tobacco','Current','Active smoker','amber',p.motiv!=null&&p.motiv>=6?'Cessation program · NRT':'Brief advice · assess motivation');
+
+  // ---- wellness tier (5-tier, MCU Scanner May 2026 definitions)
+  const redFlags=R.flags.filter(f=>f.level==='red').length;
+  const chronicCount=[isDM,htnConfirmed,dyslip].filter(Boolean).length;
+  let tier,why;
+  if(redFlags||has('cancer')||has('mi90')||has('hf34')||has('afnew')){ tier='red'; why=redFlags?`${redFlags} critical value${redFlags>1?'s':''} tripped`:'Active malignancy / recent CV event / decompensated cardiac condition'; }
+  else if(chronicCount>=3||(p.hba1c!=null&&p.hba1c>9)||(p.ldl!=null&&p.ldl>190)||(eg!=null&&eg>=30&&eg<60)||(isDM&&(albumin||establishedCVD))||(sbp!=null&&(sbp>=160||(dbp!=null&&dbp>=100)))){ tier='amber'; why=chronicCount>=3?'DM + HTN + dyslipidaemia together':(p.hba1c!=null&&p.hba1c>9)?`HbA1c ${p.hba1c}% >9`:(eg!=null&&eg<60)?`eGFR ${eg} (30–60)`:(p.ldl!=null&&p.ldl>190)?`LDL ${p.ldl} >190`:(isDM&&(albumin||establishedCVD))?'Diabetes with complication (ACR ≥30 / MACE history)':`BP ${sbp}/${dbp} severe`; }
+  else if(enrolled.some(c=>c!=='DPP')||candidates.includes('HMP')){ tier='yellow'; why='One or more confirmed chronic conditions: '+enrolled.filter(c=>c!=='DPP').concat(candidates.includes('HMP')?['HMP (to confirm)']:[]).join(', '); }
+  else if(enrolled.includes('DPP')||candidates.includes('DPP')||preDM||bpElevated||(p.ldl!=null&&p.ldl>=130)||(bmi!=null&&bmi>=25)||p.smoker==='current'||nafld||R.flags.length){ tier='lime'; why='Pre-disease or lifestyle risk, no chronic diagnosis yet'; }
+  else { tier='green'; why='All MCU markers within normal · no red flags · no lifestyle high-risk'; }
+  R.tier={key:tier,...TIERS[tier],why};
+
+  // ---- dr. William protocol 2.2 pathway
+  const PR=R.protocol;
+  PR.push({title:'Common to every enrolled member · enrolment day one',cadence:'Enrolment · every follow-up · annual review (month 12)',labs:'HbA1c · urea + creatinine with eGFR · lipid panel (LDL) · SGOT / SGPT · urinalysis (qualitative ACR on dipstick) · 12-lead ECG read into record',exam:'Height, weight, BMI, body composition (Tanita MC-780MA) · waist · BP to protocol · head-to-toe · skin · thyroid palpation',rx:'Molecule-based OGB formulary · brand at pharmacy discretion',confirm:['Annual liver function for all vs baseline + statin-only repeat','Coach contact daily via app, monthly coach review']});
+  const dmComplicated=isDM&&(albumin||(eg!=null&&eg<60)||establishedCVD);
+  if(isDM&&!dmComplicated) PR.push({title:'Row 3 · Type 2 diabetes without complications',cadence:'Doctor every 3 months · 5 visits in year one (enrolment, M3, M6, M9, M12)',labs:'HbA1c every 3 or 6 months at a scheduled visit · capillary glucose each visit · annual urine protein · retinal screening referred out annually',exam:'Diabetic foot exam at enrolment + annual (monofilament, vibration, pulses, reflexes) · foot inspection each visit',rx:'Metformin IR 500 mg BID first line (eGFR before start, annual) → 850 mg BID · gliclazide 80 mg second line (preferred over glimepiride) · gliquidone in mild CKD · simvastatin 10 mg freely · atorvastatin reserved for secondary prevention · vitamin B complex on metformin · insulin → endocrinology',confirm:['HbA1c interval: 3 vs 6 months','Acarbose and DPP-4 (priced above fee; carried as prescribed-not-covered?)']});
+  if(dmComplicated) PR.push({title:'Row 4 · Type 2 diabetes with complications (ACR ≥30, eGFR <60, or MACE history)',cadence:'Monthly until target, then every 3 months · 7 visits in year one (enrolment, M1, M2, M3, M6, M9, M12)',labs:'HbA1c monthly until target then every 3–6 months · creatinine repeat early if falling · referred out: retinal screening + echocardiography',exam:'As row 3 plus what the specific complication requires',rx:'As row 3 plus SGLT2 inhibitor where indicated at eGFR ≤60 · prescribed here, dispensed and billed outside the membership',confirm:['HbA1c that places a member here: 8% or 9%','Numeric target and number of monthly visits before interval loosens','Trigger for repeating creatinine before 12 months']});
+  if(preDM||(P.DPP.status!=='no'&&!isDM)) PR.push({title:preDM?'Row 2 · Prediabetes':'Row 1 · Obesity and metabolic syndrome',cadence:'3 doctor visits in year one · enrolment, month 6, month 12',labs:'HbA1c once a year as screening for conversion · OGTT if HbA1c near 6.5',exam:preDM?'Common enrolment only':'Body composition at every visit',rx:'Lifestyle modification only · no routine pharmacotherapy · simvastatin where lipid targets require · GLP-1 not covered',confirm:['Visit cadence for this group','Whether metformin is used in prediabetes and on what threshold (SOP 6 says BMI ≥30 or HbA1c 6.0–6.4 or prior GDM)','Criteria for moving a member to another pathway']});
+  if(htnConfirmed||htnCandidate) PR.push({title:'Row 5 · Hypertension',cadence:'Monthly until controlled, then every 3 months · 5–6 visits in year one',labs:'Common panel covers comorbidity screen (kidney, liver, lipids, repeat ECG) · HbA1c not indicated as monitoring',exam:'Confirm diagnosis and exclude white-coat: repeated readings checked against member\'s own home device · home BP log review each visit',rx:'Amlodipine 5/10 mg first line → losartan 50 mg (default ARB) second → add HCT 25 mg third · bisoprolol fourth or coronary disease · captopril available · candesartan reserved for HF, valsartan for post-infarct',confirm:['BP at which each step is taken (SOP: start Rx at ≥140/90 or any DM/CKD comorbidity)','Home-monitoring frequency and the reading that brings a member in early','Creatinine + potassium after starting ACE-i/ARB (K⁺ not on test list)']});
+  if(P.CMP.status==='yes'&&dyslip) PR.push({title:'Dyslipidaemia (CMP) · NCD guideline draft',cadence:'Lipid recheck 6–8 weeks after statin start, then annual · SGOT/SGPT 6 weeks post-start',labs:'Lipid panel · ALT/AST · CK before statin (baseline) and on myalgia · TSH baseline',exam:'BP · BMI each visit',rx:establishedCVD?'Secondary prevention: atorvastatin 20 mg (reserved) · aspirin low dose TO CONFIRM · LDL target <55':(p.ldl!=null&&p.ldl>=190)?'High-intensity atorvastatin · FH workup':`Simvastatin 10–20 mg if ASCVD ≥7.5% or LDL ≥160 or diabetes · LDL target ${isDM||ckd13?'<70':'<100'} · fenofibrate if TG >500`,confirm:['Rosuvastatin on formulary','Aspirin low dose']});
+  if(P.LKMP.status!=='no') PR.push({title:'LKMP · liver / kidney / thyroid (Clinical Reference)',cadence:'Quarterly review · annual FIB-4 and KFRE',labs:nafld?'LFT + FIB-4 at week 12 and 6 months · HBsAg / anti-HCV once':ckd13?'Creatinine + eGFR and UACR every 3–6 months · K⁺ on ACE-i/ARB':'TSH 6–8 weeks after dose change, then annual',exam:'BP target <130/80 (CKD) · weight',rx:nafld?'7–10% weight loss · manage DM/lipids/BP per SOP · no alcohol':ckd13?'ACE-i / ARB (losartan) if albuminuria · avoid NSAIDs · statin':'Levothyroxine · TSH target 0.5–2.5',confirm:['LKMP rows are not yet in protocol 2.2 (Tier 2) · cadence to be drafted with dr. William']});
+  if(P.WMP.status!=='no') PR.push({title:'WMP · respiratory / mental wellness (Clinical Reference)',cadence:'PHQ-9 / GAD-7 quarterly via app · ACT / CAT each visit · spirometry annual',labs:'TSH if not done (rule out thyroid cause)',exam:'Inhaler technique each visit · SpO₂',rx:'Sertraline 50 mg first line (escitalopram alt) · salbutamol / budesonide / bud-formoterol · tiotropium for COPD · Q9 positive escalates same day',confirm:['Mental-health severe range: refer psychiatrist vs escalate chief coach vs both','WMP rows not yet in protocol 2.2']});
+  if(p.smoker==='current') PR.push({title:'Smoking cessation (Tier 1 reversal track)',cadence:'12-week program · weekly coach sessions',labs:'—',exam:'Spirometry if dyspnoea or >10 pack-years',rx:'NRT · varenicline added to formulary at M6 · bupropion if no seizure / eating-disorder history',confirm:[]});
+
+  // ---- risk drivers for cohort aggregation
+  const D=R.drivers; if(isDM) D.push('diabetes'); if(preDM) D.push('prediabetes'); if(htnConfirmed||htnCandidate) D.push('hypertension'); if(bpElevated) D.push('elevated BP'); if(dyslipLab) D.push('dyslipidaemia'); if(bmi!=null&&bmi>=25) D.push('obesity (BMI ≥25)'); if(p.smoker==='current') D.push('smoking'); if(nafld||altHigh) D.push('raised ALT / NAFLD'); if(ckd13||albumin) D.push('CKD / albuminuria'); if(p.phq!=null&&p.phq>=10) D.push('depression (PHQ ≥10)'); if(p.gad!=null&&p.gad>=10) D.push('anxiety (GAD ≥10)'); if(hypo) D.push('hypothyroid'); if(mets.length>=3) D.push('metabolic syndrome');
+
+  // ---- patient-facing Bahasa report
+  const B=R.patient; const nm=p.name||'Anggota';
+  B.push(`Hasil MCU Anda · ${nm}`); B.push(`Tingkat: ${({red:'Merah · perlu tindakan segera',amber:'Oranye · perlu perhatian',yellow:'Kuning · perlu pendampingan',lime:'Hijau muda · pencegahan',green:'Hijau · sehat'})[tier]}`); B.push('');
+  B.push('Apa yang kami temukan');
+  if(p.hba1c!=null) B.push(isDM?`• HbA1c ${p.hba1c}% — di atas batas normal (≤ 6,4%). Gula darah Anda tinggi selama 3 bulan terakhir. Tindak lanjut: konsultasi dokter dalam 7 hari · mulai Program Manajemen Diabetes.`:preDM?`• HbA1c ${p.hba1c}% — sedikit di atas normal (5,7–6,4%). Belum diabetes, tapi berisiko. Tindak lanjut: Program Pencegahan Diabetes.`:`• HbA1c ${p.hba1c}% — normal · pertahankan.`);
+  else if(p.fpg!=null) B.push(isDM?`• Gula darah puasa ${p.fpg} mg/dL — tinggi (normal < 100). Tindak lanjut: konsultasi dokter dalam 7 hari.`:preDM?`• Gula darah puasa ${p.fpg} mg/dL — sedikit tinggi (100–125). Tindak lanjut: program pencegahan.`:`• Gula darah puasa ${p.fpg} mg/dL — normal.`);
+  if(sbp!=null&&dbp!=null) B.push(bpHigh?`• Tekanan darah ${sbp}/${dbp} — tinggi (normal < 140/90). Tindak lanjut: catat tekanan darah pagi dan sore selama 7 hari · konsultasi dokter.`:bpElevated?`• Tekanan darah ${sbp}/${dbp} — sedikit tinggi. Kurangi garam · cek ulang 3 bulan.`:`• Tekanan darah ${sbp}/${dbp} — normal.`);
+  if(p.ldl!=null) B.push(p.ldl>130?`• Kolesterol LDL ${p.ldl} — di atas normal (< 130). ${p.ldl>=190?'Perlu obat dan pemeriksaan lanjutan.':'Bisa diperbaiki dengan pola makan dan aktivitas · dokter akan menilai perlu obat atau tidak.'}`:`• Kolesterol LDL ${p.ldl} — normal.`);
+  if(p.tg!=null&&p.tg>=150) B.push(`• Trigliserida ${p.tg} — tinggi (normal < 150). Kurangi gula, nasi berlebih, dan gorengan.`);
+  if(eg!=null) B.push(eg<60?`• Fungsi ginjal (eGFR ${eg}) — menurun. Dokter akan memantau lebih ketat.`:`• Fungsi ginjal (eGFR ${eg}) — normal · pertahankan.`);
+  if(p.alt!=null||p.ast!=null) B.push((altHigh||astHigh)?`• Fungsi hati (SGPT ${p.alt??'—'} / SGOT ${p.ast??'—'}) — di atas normal. ${p.usg==='steatosis'?'USG menunjukkan perlemakan hati. Turun berat badan 7–10% adalah pengobatan utamanya.':'Perlu USG hati untuk memastikan penyebabnya.'}`:`• Fungsi hati — normal.`);
+  if(bmi!=null&&bmi>=25) B.push(`• Berat badan (BMI ${bmi}) — di atas batas sehat (< 25). Target: turun 5–7% dalam 6 bulan.`);
+  if(p.smoker==='current') B.push('• Merokok — faktor risiko terbesar yang bisa Anda ubah. Program berhenti merokok 12 minggu tersedia.');
+  if(p.phq!=null&&p.phq>=10) B.push('• Skrining suasana hati menunjukkan Anda mungkin sedang berat. Dokter dan coach Loop siap mendampingi — ini bagian dari program, bukan hal yang memalukan.');
+  B.push(''); B.push('Rencana Loop untuk Anda');
+  if(tier==='red') B.push('1. Dokter Loop akan menghubungi Anda HARI INI. Jika ada nyeri dada, sesak, sakit kepala hebat, atau lemas berat — segera ke IGD terdekat.');
+  else if(enrolled.length||candidates.length) B.push(`1. Konsultasi dokter dalam 7 hari — dokter akan memastikan diagnosis dan memulai rencana perawatan (${enrolled.concat(candidates).join(' + ')}).`);
+  else B.push('1. Tidak ada tindak lanjut medis khusus. MCU ulang tahun depan.');
+  if(enrolled.length||candidates.length){ B.push('2. Satu dokter tetap di Klinik Loop untuk semua kondisi Anda · obat generik berlogo tanpa biaya tambahan.'); B.push('3. Coach Loop akan menghubungi Anda dalam 24 jam · pantau harian lewat aplikasi.'); }
+  B.push(''); B.push('Yang bisa Anda lakukan sekarang'); B.push('• Jalan kaki 30 menit/hari, 5× seminggu · kurangi nasi sampai 1 porsi/makan · perbanyak sayur');
+  if(bpHigh||bpElevated) B.push('• Catat tekanan darah pagi + sore di aplikasi Loop');
+  B.push('• Jika ada gejala sakit kepala berat / nyeri dada / sesak napas — hubungi Loop atau IGD terdekat');
+  R.enrolled=enrolled; R.candidates=candidates; R.derived.isDM=isDM; R.derived.preDM=preDM; R.derived.htn=htnConfirmed||htnCandidate; R.derived.dyslip=dyslip; R.derived.ckdStage=ckdStage;
+  return R;
+}
+
+
+
+
+/* ======================= I18N ======================= */
+const I18N={
+id:{
+ proto:'Prototipe internal Loop · mesin aturan sama dengan MCU Analyzer klinis (eligibility v3 + protokol dr. William 2.2) · segmentasi klaim = metode 4-bucket Loop (Jun 2026) · versi produksi dipasang sebagai Embed di Webflow',
+ 'nav.personal':'Personal','nav.business':'Bisnis','nav.risk':'Cek Risiko Diabetes','nav.mcu':'Cek Hasil MCU','nav.consult':'Konsultasi Gratis',
+ 'hero.h1':'Unggah Hasil MCU. Pahami Tingkat Diabetes & Hipertensi — dan Program yang Tepat.','hero.sub':'Satu hasil, beberapa, atau satu file Excel untuk seluruh karyawan. Loop membacanya dan menjelaskan di mana posisi Anda — atau karyawan Anda — untuk diabetes, hipertensi, dan kolesterol, serta program Loop mana yang sebaiknya diikuti. Bukan diagnosis; penjelasan awal sebelum bicara dengan dokter.','hero.upload':'Unggah Sekarang','hero.demo':'Lihat Contoh',
+ 'pv.kicker':'Contoh hasil','pv.title':'Hasil MCU Budi, 47 Tahun','pv.bp':'Tekanan darah','pv.ldl':'Kolesterol LDL','pv.kidney':'Fungsi ginjal','pv.c1':'Diabetes','pv.c2':'Hipertensi','pv.c3':'Agak tinggi','pv.c4':'Normal','pv.foot':'Yang cocok: <strong>Program Manajemen Diabetes</strong> + <strong>Program Tekanan Darah & Kolesterol</strong> · laporan dikirim ke email Anda',
+ 'tool.h2':'Unggah Hasil MCU Anda','tool.drop':'Taruh file di sini — satu, beberapa, atau Excel','tool.dropsub':'PDF · foto (JPG/PNG) · Excel / CSV · pilih beberapa sekaligus atau drag & drop','tool.status0':'File dibaca hanya untuk analisis ini dan tidak disimpan.',
+ 'way.1t':'1 file = hasil pribadi','way.1p':'PDF lab atau foto lembar MCU. Beberapa halaman boleh.','way.2t':'Beberapa PDF = beberapa orang','way.2p':'Tiap PDF dibaca sebagai satu orang. Cocok untuk keluarga atau tim kecil.','way.3t':'Excel / CSV = seluruh karyawan','way.3p':'Rekap MCU per karyawan, atau data klaim dengan kode ICD-10 untuk asuransi/TPA.',
+ 'tool.notdx':'<b>Bukan diagnosis.</b> Alat ini membantu Anda memahami tingkat diabetes, hipertensi, dan kolesterol — milik Anda sendiri atau karyawan Anda — dan program Loop mana yang sebaiknya diikuti. Keputusan medis tetap oleh dokter.',
+ 'pvb.title':'Kohort 320 karyawan · PT Contoh','pvb.r1':'Perlu dokter hari ini','pvb.c1':'Merah','pvb.r2':'Sudah ada kondisi kronis','pvb.c2':'Program','pvb.r3':'Masih bisa dicegah','pvb.c3':'Pencegahan','pvb.r4':'Biaya klaim di kohort NCD','pvb.c4':'Bucket A+B+C','pvb.foot':'Program yang dibutuhkan: <strong>Diabetes</strong>, <strong>Tekanan Darah & Kolesterol</strong>, <strong>Pencegahan</strong> · laporan untuk manajemen','wayb.1t':'Excel / CSV rekap MCU','wayb.1p':'Satu baris per karyawan: HbA1c, tekanan darah, kolesterol, dst. Judul kolom bahasa Indonesia atau Inggris.','wayb.2t':'Data klaim ICD-10','wayb.2p':'Ekspor klaim dari TPA/asuransi: ID peserta, kode ICD-10, nilai klaim. Segmentasi 4-bucket.','wayb.3t':'Beberapa PDF','wayb.3p':'Tiap PDF hasil MCU dibaca sebagai satu karyawan.','xl.h':'HR, asuransi, atau TPA?','xl.p':'Unggah rekap MCU seluruh karyawan atau data klaim ICD-10 di halaman Bisnis.','xl.btn':'Ke halaman Bisnis','xlb.h':'Cek hasil MCU Anda sendiri?','xlb.p':'Untuk satu orang, gunakan halaman Personal — unggah PDF atau foto hasil lab.','xlb.btn':'Ke halaman Personal','sheetonpersonal':'File Excel/CSV untuk banyak karyawan dianalisis di halaman Bisnis.','nav.corporate':'Perusahaan','nav.insurer':'Asuransi','pvi.title':'Portofolio 1.200 peserta · Asuransi Contoh','pvi.r1':'Peserta di kohort NCD','pvi.c1':'Bucket A+B+C','pvi.r2':'Biaya klaim di kohort NCD','pvi.c2':'dari total','pvi.r3':'Belum terdiagnosis','pvi.c3':'Bucket B','pvi.r4':'Biaya per peserta vs sehat','pvi.c4':'kelipatan','pvi.foot':'Pembanding Loop: ~20% peserta / ~34% biaya · laporan untuk tim aktuaria','wayb.4t':'Foto lembar MCU','wayb.4p':'Beberapa foto sekaligus dibaca sebagai satu orang. Untuk tim kecil tanpa rekap Excel.','wayi.1t':'CSV / Excel klaim','wayi.1p':'Ekspor dari sistem klaim: satu baris per klaim. Format Rp 1.250.000 atau 1,250,000 sama-sama terbaca.','wayi.2t':'Kode ICD-10','wayi.2p':'E11.9 atau E119 sama-sama terbaca. Beberapa kode dalam satu sel dipisah koma.','wayi.3t':'Tidak keluar dari browser','wayi.3p':'Seluruh perhitungan di perangkat Anda. Yang dikirim ke Loop hanya ringkasan — itu pun setelah Anda setuju.','xl.btnc':'Halaman Perusahaan','xl.btni':'Halaman Asuransi','xlc.h':'Asuransi atau TPA?','xlc.p':'Untuk data klaim dengan kode ICD-10, gunakan halaman Asuransi.','xli.h':'HR dengan rekap MCU?','xli.p':'Untuk rekap MCU per karyawan atau beberapa PDF, gunakan halaman Perusahaan.','b2bc.t2':'Beberapa PDF hasil MCU','b2bc.p2':'Belum punya rekap Excel? Unggah PDF hasil MCU beberapa karyawan sekaligus; tiap PDF dibaca sebagai satu orang.','b2bi.h2':'Cara Loop Membaca Data Klaim','b2bi.sub':'Metode 4-bucket yang sama yang Loop pakai pada kohort usia kerja — hasilnya ~20% peserta dan ~34% biaya bisa ditangani lewat kapitasi.','b2bi.t1':'NCD terdiagnosis','b2bi.p1':'Peserta dengan kode diabetes (E10–E14), hipertensi (I10–I15), penyakit jantung iskemik (I25), atau dislipidemia (E78) di riwayat klaimnya.','b2bi.t2':'Komplikasi tanpa diagnosis','b2bi.p2':'Peserta yang klaim stroke, gagal jantung, gagal ginjal, neuropati, atau infeksi terkait diabetes — tanpa diagnosis NCD di file. Segmen yang biasanya tidak terlihat.','b2bi.t3':'Biaya per bucket','b2bi.p3':'Jumlah peserta, total klaim, rata-rata per peserta, dan kelipatan terhadap peserta sehat — ditambah program Loop mana yang menampung tiap kode.','xr.h':'Contoh Laporan yang Anda Terima','xr.p':'Setelah mengisi kontak, Anda menerima laporan seperti ini — bisa dibagikan ke keluarga atau dokter Anda.','xr.note':'Contoh dengan data sintetis, bukan data nyata.','notcorp':'File ini terlihat seperti data klaim ICD-10 — dianalisis di halaman Asuransi.','notins':'File ini terlihat seperti rekap MCU karyawan — dianalisis di halaman Perusahaan.','pdfonins':'PDF atau foto hasil MCU dianalisis di halaman Perusahaan (banyak orang) atau Personal (satu orang).','tool.demo1':'Contoh: 1 orang','tool.demo2':'Contoh: Excel MCU karyawan','tool.demo3':'Contoh: data klaim ICD-10','tool.norisk':'Belum punya hasil MCU? Cek risiko','tool.read':'Nilai yang terbaca:',
+ 'lead.h2':'Dapatkan Laporan untuk Dibagikan ke Tim Anda','lead.p':'Isi kontak Anda. Kami kirim laporan lengkap yang bisa dibagikan — ke keluarga, HR, atau tim Anda — lalu tim Loop menghubungi Anda untuk membahasnya. Gratis.','lead.name':'Nama','lead.email':'Email','lead.wa':'Nomor WhatsApp','lead.co':'Perusahaan / organisasi','lead.consent':'Saya setuju Loop menyimpan ringkasan hasil ini dan menghubungi saya via email/WhatsApp untuk membahasnya. Data kesehatan tidak dibagikan ke pihak lain.','lead.send':'Kirim Laporan Saya','lead.wabtn':'Chat WhatsApp','lead.t1':'✓ Dibaca dokter Loop','lead.t2':'✓ Coach ahli gizi bersertifikat','lead.t3':'✓ Member turun HbA1c rata-rata 1,2%',
+ 'lead.need':'Isi nama, email, dan centang persetujuan dulu.','lead.sent':'Laporan siap. Di versi produksi laporan ini dikirim ke email Anda; di prototipe ini Anda bisa menyimpannya langsung.','lead.saved':'Laporan tersimpan. Tim Loop akan menghubungi Anda.','lead.inline':'Laporan ditampilkan di bawah (simpan via browser: Ctrl/Cmd+S di jendela laporan).','lead.copy':'Salin teks laporan','lead.save':'Simpan laporan (HTML)','lead.copied':'Teks laporan disalin',
+ 'b2b.h2':'Untuk HR, Asuransi, dan TPA','b2b.sub':'File Excel yang sama yang Anda terima dari vendor MCU — atau ekspor klaim dari sistem Anda — cukup diunggah di atas.','b2b.t1':'Rekap MCU karyawan','b2b.p1':'Satu baris per karyawan dengan HbA1c, tekanan darah, kolesterol, dan seterusnya. Anda melihat sebaran tingkat risiko, berapa orang yang perlu dokter segera, dan program mana yang dibutuhkan.','b2b.t2':'Data klaim dengan ICD-10','b2b.p2':'Loop menjalankan segmentasi 4-bucket: peserta dengan NCD terdiagnosis, yang hanya klaim komplikasi (belum terdiagnosis), keduanya, dan sehat — berikut biaya per bucket. Dihitung di browser Anda; data tidak dikirim ke mana pun.','b2b.t3':'Laporan + diskusi 30 menit','b2b.p3':'Setelah mengisi kontak, Anda mendapat laporan yang bisa dibagikan ke manajemen, dan tim Loop menghitung skenario kapitasi untuk kohort Anda.',
+ 'py.maphelp':'Cocokkan kolom data klaim Anda, lalu jalankan analisis. Peserta usia ≤ 21 dikeluarkan (filter tanggungan anak).','py.resp':'Sertakan PPOK / asma (J42–J47) sebagai NCD utama (sensitivitas kohort industri)','py.run':'Jalankan analisis','py.col.member':'ID peserta','py.col.icd':'Kode ICD-10','py.col.amount':'Nilai klaim (Rp)','py.col.age':'Usia','py.col.date':'Tanggal klaim','py.none':'— tidak ada —',
+ 'py.k.members':'Peserta dianalisis','py.k.addr':'Kohort yang bisa ditangani Loop','py.k.addrs':'peserta (Bucket A + B + C)','py.k.spend':'Biaya klaim di kohort tersebut','py.k.spends':'dari total klaim','py.k.mult':'Biaya per peserta vs peserta sehat','py.k.undiag':'Belum terdiagnosis (Bucket B)','py.k.undiags':'klaim komplikasi tanpa diagnosis NCD',
+ 'py.bench':(m,s)=>`Pembanding Loop pada kohort usia kerja: ~20% peserta / ~34% biaya. Kohort Anda: ${m}% / ${s}%.`,
+ 'py.buckets':'Segmentasi 4-bucket (waterfall, saling eksklusif)','py.b.A':'A · NCD utama terdiagnosis','py.b.B':'B · Komplikasi saja (belum terdiagnosis)','py.b.C':'C · Keduanya','py.b.D':'D · Sehat / lainnya',
+ 'py.th.b':'Bucket','py.th.m':'Peserta','py.th.mp':'% peserta','py.th.s':'Klaim (Rp)','py.th.sp':'% biaya','py.th.avg':'Rata-rata / peserta','py.th.x':'× sehat',
+ 'py.attr':'Atribusi biaya per klaim','py.a.prim':'Klaim dengan kode NCD utama','py.a.comp':'Klaim komplikasi tanpa kode NCD utama','py.a.other':'Klaim lainnya',
+ 'py.top':'Kondisi terbesar menurut biaya','py.th.code':'Kode','py.th.cond':'Kondisi','py.th.prog':'Program Loop','py.th.claims':'Klaim','py.progs':'Biaya yang masuk program Loop (grid v3)','py.demo.note':'Data contoh sintetis (bukan klaim nyata) — untuk melihat bentuk analisisnya.','py.h2':'Hasil Analisis Klaim',
+ 'py.wa':(n,m,s,b)=>`Halo Loop, saya dari asuransi/perusahaan. Saya baru menganalisis data klaim ${n} peserta di web Loop: ${m}% peserta dan ${s}% biaya masuk kohort NCD (Bucket A+B+C), ${b}% belum terdiagnosis. Mau diskusi skenario kapitasi.`,
+ 'py.err.cols':'Kolom ICD-10 dan nilai klaim wajib ada. Cocokkan kolom di atas.','py.err.rows':'Perlu baris header dan minimal satu baris data.','py.err.file':'File tidak bisa dibaca. Gunakan PDF, foto, CSV, atau Excel.','py.st.parsed':(r)=>`${r} baris klaim terbaca. Periksa pemetaan kolom lalu jalankan.`,'py.st.auto':(r)=>`${r} baris klaim terbaca dan dianalisis.`,
+ 'mc.h2':'Hasil MCU Karyawan','mc.k.n':'Karyawan dianalisis','mc.k.red':'Perlu dokter hari ini','mc.k.reds':'nilai kritis','mc.k.chronic':'Sudah ada kondisi kronis','mc.k.chronics':'diabetes / hipertensi / kolesterol','mc.k.pre':'Masih bisa dicegah','mc.k.pres':'prediabetes / risiko gaya hidup','mc.k.green':'Sehat','mc.tiers':'Sebaran tingkat risiko','mc.progs':'Program yang dibutuhkan','mc.table':'Per karyawan (merah dulu)','mc.th.name':'Nama / ID','mc.th.age':'Usia','mc.th.tier':'Tingkat','mc.th.glu':'Gula darah','mc.th.bp':'Tekanan darah','mc.th.ldl':'LDL','mc.th.prog':'Program','mc.demo.note':'Data contoh sintetis (bukan karyawan nyata).','mc.err.cols':'Tidak menemukan kolom hasil lab (HbA1c, gula puasa, tekanan darah, kolesterol). Periksa judul kolom di file Anda.','mc.st.done':(n)=>`${n} karyawan dianalisis.`,'mc.st.multi':(n,t)=>`Membaca file ${n} dari ${t}…`,
+ 'mc.wa':(n,red,chron,pre)=>`Halo Loop, saya baru mengunggah hasil MCU ${n} karyawan di web Loop: ${red} perlu dokter segera, ${chron} sudah punya kondisi kronis, ${pre} masih bisa dicegah. Mau diskusi program untuk perusahaan kami.`,
+ tier:{red:'Merah · segera',amber:'Oranye · serius',yellow:'Kuning · satu kondisi',lime:'Hijau muda · cegah',green:'Hijau · sehat'},
+ 'ft.sol':'Solusi','ft.corp':'Perusahaan','ft.about':'Tentang Loop','ft.contact':'Hubungi Kami','ft.disc':'Alat ini memberi penjelasan awal, bukan diagnosis. Keputusan medis tetap oleh dokter. Jika ada nyeri dada, sesak napas, sakit kepala hebat, atau lemas berat, segera ke IGD terdekat. © 2026 Loop Health Indonesia.',
+ 'wa.float':'Tanya Loop','wa.floatmsg':'Halo Loop, saya mau tanya tentang hasil MCU saya',
+ 'r.h2':'Hasil Anda','r.red':'Perlu dokter hari ini:','r.redtail':'Jika disertai gejala berat, langsung ke IGD.','r.mets':(n)=>`Anda memenuhi ${n} dari 5 kriteria sindrom metabolik — kombinasi lingkar perut, gula, kolesterol, dan tekanan darah yang saling memperburuk. Ini yang paling sering jadi pintu masuk diabetes dan penyakit jantung.`,'r.fit':'Yang cocok untuk Anda','r.confirm':'· perlu konfirmasi dokter','r.green.t':'Pertahankan dengan aplikasi Loop','r.green.p':'Pantau berat badan dan aktivitas, konten kesehatan mingguan, dan pengingat MCU tahun depan.','r.doc.t':'Konsultasi dokter Loop dulu','r.doc.p':'Ada temuan yang perlu dilihat dokter sebelum menentukan program. Konsultasi pertama gratis.','r.excl':(rules,route)=>`Catatan: ${rules} — untuk kondisi ini Loop akan mengarahkan ke spesialis yang tepat (${route}).`,'r.start':'Yang bisa Anda mulai sekarang','r.lk':'Ada temuan lain (fungsi hati, ginjal, tiroid, pernapasan, atau suasana hati). Ini bukan program terpisah — dokter Loop meninjaunya pada konsultasi pertama dan, bila perlu, merujuk ke spesialis.',
+ tips:{dm:'Kurangi nasi sampai 1 porsi per makan, tambah sayur, jalan 30 menit sehari.',htn:'Catat tekanan darah pagi dan sore selama 7 hari sebelum bertemu dokter.',smoke:'Berhenti merokok adalah satu perubahan dengan dampak terbesar — Loop punya program 12 minggu.',bmi:'Target turun 5–7% berat badan dalam 6 bulan sudah cukup untuk memperbaiki hampir semua angka di atas.'},
+ prog:{DMP:['Program Manajemen Diabetes','Coach ahli gizi setiap hari lewat aplikasi, dokter tetap, obat generik tanpa biaya tambahan. Rata-rata member turun HbA1c 1,2%.'],DPP:['Program Pencegahan Diabetes','Belum diabetes, tapi angkanya mulai naik. Program 6 bulan untuk membalikkan arah: pola makan, aktivitas, dan pantauan HbA1c.'],HMP:['Program Tekanan Darah & Kolesterol','Pantau tekanan darah dari rumah, kolesterol ke target, obat generik yang tepat, dan kunjungan dokter sampai terkendali — supaya risiko serangan jantung dan stroke turun.']},
+ verdict:{red:['Ada angka yang perlu ditangani hari ini','Beberapa hasil berada di luar batas aman. Hubungi dokter hari ini — tim Loop bisa bantu menjadwalkan.'],amber:['Perlu perhatian serius','Lebih dari satu kondisi yang sebaiknya mulai ditangani sekarang. Kabar baiknya: semuanya bisa dikendalikan.'],yellow:['Satu kondisi yang perlu dikelola','Ada satu hal yang sebaiknya mulai dipantau bersama dokter. Ditangani dini jauh lebih mudah.'],lime:['Masih bisa dicegah','Belum ada penyakit kronis, tapi ada tanda awal. Ini momen terbaik untuk membalikkan arah.'],green:['Hasil Anda baik','Semua angka utama dalam batas normal. Pertahankan, dan ulangi MCU tahun depan.']},
+ domain:{Glucose:'Gula darah',BMI:'Berat badan (BMI)','Blood pressure':'Tekanan darah',Lipids:'Kolesterol LDL',Kidney:'Fungsi ginjal',Liver:'Fungsi hati',Mood:'Suasana hati',Anxiety:'Kecemasan',Tobacco:'Rokok'},
+ normal:{Glucose:'normal HbA1c < 5,7% · gula puasa < 100',BMI:'sehat 18,5–22,9 (Asia)','Blood pressure':'normal < 120/80',Lipids:'LDL ideal < 100',Kidney:'eGFR ≥ 90',Liver:'SGPT/SGOT ≤ 40',Tobacco:'tidak merokok'},
+ stage:{'T2D uncontrolled':'Diabetes · belum terkendali','T2D suboptimal':'Diabetes · perlu obat lebih tepat','T2D controlled':'Diabetes · terkendali','Prediabetes':'Prediabetes','Normal':'Normal','Crisis':'Sangat tinggi · segera','Severe HTN':'Hipertensi berat','Stage 2':'Hipertensi','Stage 1 / elevated':'Mulai tinggi','Elevated':'Sedikit tinggi','Very high':'Sangat tinggi','High':'Tinggi','Borderline high':'Agak tinggi','Near-optimal':'Hampir ideal','Optimal':'Ideal','NAFLD':'Perlemakan hati','Raised transaminases':'Enzim hati naik','Active smoker':'Perokok aktif','Underweight':'Kurang','Normal (18.5–22.9)':'Normal','Overweight (23–24.9 · Asian)':'Berlebih','Obese I (25–29.9 · Asian)':'Obesitas I','Obese II (30–34.9)':'Obesitas II','Severe obesity (≥35)':'Obesitas berat','Minimal':'Minimal','Mild':'Ringan','Moderate':'Sedang','Severe':'Berat','Severe / safety':'Perlu bantuan segera'},
+ wa:(name,verdict,parts,progs,co)=>`Halo Loop, saya ${name||'(nama)'} baru cek hasil MCU di web Loop. Hasil: ${verdict}. ${parts}. Program yang disarankan: ${progs||'konsultasi dokter'}. ${co?'Dari '+co+'. ':''}Saya mau konsultasi gratis.`,
+ st:{reading:'Membaca file…',unreadable:'File tidak terbaca.',thinking:'Loop sedang membaca hasil Anda… (± 20 detik · pertama kali akan minta izin)',got:(n)=>`Terbaca ${n} nilai. Hasil di bawah.`,fail:'File tidak bisa dibaca. Coba foto yang lebih jelas atau PDF asli.',noclaude:'Membaca PDF/foto bekerja di tampilan Claude. Di prototipe ini, Excel/CSV tetap bisa, atau coba tombol contoh.'},
+ err:{not_granted:'Akses Claude tidak diizinkan di halaman ini, jadi PDF/foto tidak bisa dibaca. Excel/CSV tetap bisa.',images_unavailable:'Foto tidak bisa dibaca di tampilan ini. Unggah PDF teks.',image_rejected:'Foto tidak terbaca (format/ukuran). Coba JPEG/PNG di bawah 20 MB.',rate_limited:'Terlalu banyak permintaan. Tunggu sebentar lalu coba lagi.',invalid_json:'Kami tidak menemukan angka lab di file itu. Pastikan ini hasil MCU.',refused:'File itu tidak bisa diproses.'},
+ 'r.count':(n,m)=>n?`${n} dari ${m} pemeriksaan di luar batas normal`:`Semua ${m} pemeriksaan dalam batas normal`,expl:{Glucose:'Gula darah rata-rata 3 bulan terakhir. Makin tinggi, makin besar beban pada pembuluh darah, ginjal, dan mata.','Blood pressure':'Tekanan pada dinding pembuluh darah. Tinggi terus-menerus membebani jantung dan ginjal, sering tanpa gejala.',Lipids:'Kolesterol \'jahat\' yang menumpuk di dinding pembuluh darah. Pemicu utama serangan jantung dan stroke.',BMI:'Berat terhadap tinggi badan. Batas untuk orang Asia lebih ketat karena risiko diabetes muncul lebih awal.',Kidney:'Seberapa baik ginjal menyaring darah. Turun pelan-pelan tanpa terasa; diabetes dan hipertensi penyebab terbanyak.',Liver:'Enzim hati. Naik biasanya karena perlemakan hati, yang membaik dengan turun berat badan.',Tobacco:'Satu perubahan dengan dampak terbesar pada risiko jantung dan stroke.'},rep:{title:'Laporan Hasil MCU',sub:'Penjelasan awal hasil pemeriksaan dan program Loop yang sesuai — bukan diagnosis',cta:'Konsultasi gratis via WhatsApp',contact:'Hubungi kami',wamsg:'Halo Loop, saya sudah menerima Laporan Hasil MCU dan ingin konsultasi gratis. Nama:',for:'Disiapkan untuk',date:'Tanggal',single:'Ringkasan pribadi',multi:'Ringkasan karyawan',claims:'Analisis klaim',next:'Langkah berikutnya',nextp:'Tim Loop akan menghubungi Anda untuk membahas laporan ini bersama dokter dan coach. Konsultasi pertama gratis, tanpa kewajiban.',disc:'Laporan ini bukan diagnosis. Ini membantu memahami tingkat diabetes, hipertensi, dan kolesterol serta program Loop yang sesuai. Keputusan medis tetap oleh dokter.',members:'Karyawan',value:'Nilai',status:'Status'}
+},
+en:{
+ proto:'Internal Loop prototype · same rule engine as the clinical MCU Analyzer (eligibility v3 + dr. William protocol 2.2) · claims segmentation = Loop 4-bucket method (Jun 2026) · production version ships as a Webflow Embed',
+ 'nav.personal':'Personal','nav.business':'Business','nav.risk':'Diabetes Risk Check','nav.mcu':'MCU Results Check','nav.consult':'Free Consultation',
+ 'hero.h1':'Upload Your MCU Results. Understand Your Diabetes & Blood Pressure Level — and the Right Program.','hero.sub':'One report, several, or one Excel file for your whole workforce. Loop reads it and explains where you — or your employees — stand on diabetes, hypertension and cholesterol, and which Loop program fits. Not a diagnosis; a first explanation before you talk to a doctor.','hero.upload':'Upload Now','hero.demo':'See Examples',
+ 'pv.kicker':'Sample result','pv.title':'Budi\'s MCU Results, age 47','pv.bp':'Blood pressure','pv.ldl':'LDL cholesterol','pv.kidney':'Kidney function','pv.c1':'Diabetes','pv.c2':'Hypertension','pv.c3':'Slightly high','pv.c4':'Normal','pv.foot':'Best fit: <strong>Diabetes Management Program</strong> + <strong>Blood Pressure & Cholesterol Program</strong> · report sent to your email',
+ 'tool.h2':'Upload Your MCU Results','tool.drop':'Drop files here — one, several, or an Excel','tool.dropsub':'PDF · photo (JPG/PNG) · Excel / CSV · select several at once or drag & drop','tool.status0':'Your file is read for this analysis only and is not stored.',
+ 'way.1t':'1 file = your own result','way.1p':'A lab PDF or a photo of the MCU sheet. Several pages are fine.','way.2t':'Several PDFs = several people','way.2p':'Each PDF is read as one person. Good for a family or a small team.','way.3t':'Excel / CSV = your whole workforce','way.3p':'An MCU summary per employee, or claims data with ICD-10 codes for insurers/TPAs.',
+ 'tool.notdx':'<b>Not a diagnosis.</b> This tool helps you understand the level of diabetes, hypertension and cholesterol — your own or your employees\' — and which Loop program to enter. Medical decisions remain with a doctor.',
+ 'pvb.title':'Cohort of 320 employees · PT Example','pvb.r1':'Need a doctor today','pvb.c1':'Red','pvb.r2':'Already have a chronic condition','pvb.c2':'Program','pvb.r3':'Still preventable','pvb.c3':'Prevention','pvb.r4':'Claims spend in NCD cohort','pvb.c4':'Buckets A+B+C','pvb.foot':'Programs needed: <strong>Diabetes</strong>, <strong>Blood Pressure & Cholesterol</strong>, <strong>Prevention</strong> · report for management','wayb.1t':'Excel / CSV MCU summary','wayb.1p':'One row per employee: HbA1c, blood pressure, cholesterol and so on. Indonesian or English headers.','wayb.2t':'ICD-10 claims data','wayb.2p':'A claims export from your TPA/insurer: member ID, ICD-10 code, claim amount. 4-bucket segmentation.','wayb.3t':'Several PDFs','wayb.3p':'Each MCU PDF is read as one employee.','xl.h':'HR, insurer or TPA?','xl.p':'Upload an MCU summary for your whole workforce or ICD-10 claims data on the Business page.','xl.btn':'Go to the Business page','xlb.h':'Checking your own MCU results?','xlb.p':'For one person, use the Personal page — upload the lab PDF or a photo.','xlb.btn':'Go to the Personal page','sheetonpersonal':'Excel/CSV files for many employees are analyzed on the Business page.','nav.corporate':'Corporate','nav.insurer':'Insurers','pvi.title':'Portfolio of 1,200 members · Example Insurer','pvi.r1':'Members in NCD cohort','pvi.c1':'Buckets A+B+C','pvi.r2':'Claims spend in NCD cohort','pvi.c2':'of total','pvi.r3':'Undiagnosed','pvi.c3':'Bucket B','pvi.r4':'Cost per member vs healthy','pvi.c4':'multiple','pvi.foot':'Loop benchmark: ~20% of members / ~34% of spend · report for the actuarial team','wayb.4t':'Photos of MCU sheets','wayb.4p':'Several photos together are read as one person. For small teams without an Excel summary.','wayi.1t':'Claims CSV / Excel','wayi.1p':'An export from your claims system: one row per claim. Rp 1.250.000 and 1,250,000 both parse.','wayi.2t':'ICD-10 codes','wayi.2p':'E11.9 or E119 both parse. Several codes in one cell, comma-separated, are fine.','wayi.3t':'Never leaves the browser','wayi.3p':'All computation on your device. Only the summary goes to Loop — and only after you agree.','xl.btnc':'Corporate page','xl.btni':'Insurer page','xlc.h':'Insurer or TPA?','xlc.p':'For claims data with ICD-10 codes, use the Insurer page.','xli.h':'HR with an MCU summary?','xli.p':'For a per-employee MCU summary or several PDFs, use the Corporate page.','b2bc.t2':'Several MCU PDFs','b2bc.p2':'No Excel summary yet? Upload MCU PDFs for several employees at once; each PDF is read as one person.','b2bi.h2':'How Loop Reads Claims Data','b2bi.sub':'The same 4-bucket method Loop applied to a working-age cohort — where ~20% of members and ~34% of spend can be managed under capitation.','b2bi.t1':'Diagnosed NCD','b2bi.p1':'Members with a diabetes (E10–E14), hypertension (I10–I15), ischaemic heart disease (I25) or dyslipidaemia (E78) code in their claims history.','b2bi.t2':'Complications without a diagnosis','b2bi.p2':'Members claiming for stroke, heart failure, kidney failure, neuropathy or diabetes-related infections — with no NCD diagnosis on file. The segment that usually stays invisible.','b2bi.t3':'Spend per bucket','b2bi.p3':'Member counts, total claims, average per member and the multiple versus healthy members — plus which Loop program each code maps to.','xr.h':'The Report You Get Back','xr.p':'After leaving your contact details, you receive a report like this — ready to share with family or your doctor.','xr.note':'Example built from synthetic data, not real records.','notcorp':'This file looks like ICD-10 claims data — it is analyzed on the Insurer page.','notins':'This file looks like an employee MCU summary — it is analyzed on the Corporate page.','pdfonins':'MCU PDFs or photos are analyzed on the Corporate page (many people) or the Personal page (one person).','tool.demo1':'Example: 1 person','tool.demo2':'Example: employee MCU Excel','tool.demo3':'Example: ICD-10 claims data','tool.norisk':'No MCU results yet? Check your risk','tool.read':'Values read:',
+ 'lead.h2':'Get a Report You Can Share with Your Team','lead.p':'Leave your contact details. We send you a full report you can share — with family, HR or your team — and the Loop team gets in touch to walk through it. Free.','lead.name':'Name','lead.email':'Email','lead.wa':'WhatsApp number','lead.co':'Company / organization','lead.consent':'I agree that Loop stores this results summary and contacts me by email/WhatsApp to discuss it. Health data is not shared with anyone else.','lead.send':'Send My Report','lead.wabtn':'Chat on WhatsApp','lead.t1':'✓ Reviewed by a Loop doctor','lead.t2':'✓ Certified nutrition coaches','lead.t3':'✓ Members lower HbA1c by 1.2% on average',
+ 'lead.need':'Fill in your name and email and tick the consent box first.','lead.sent':'Your report is ready. In production it is emailed to you; in this prototype you can save it directly.','lead.saved':'Report saved. The Loop team will be in touch.','lead.inline':'The report is shown below (save it from the browser: Ctrl/Cmd+S in the report window).','lead.copy':'Copy report text','lead.save':'Save report (HTML)','lead.copied':'Report text copied',
+ 'b2b.h2':'For HR, Insurers and TPAs','b2b.sub':'The same Excel you get from your MCU vendor — or a claims export from your system — just upload it above.','b2b.t1':'Employee MCU summary','b2b.p1':'One row per employee with HbA1c, blood pressure, cholesterol and so on. You see the risk distribution, how many people need a doctor now, and which programs are needed.','b2b.t2':'Claims data with ICD-10','b2b.p2':'Loop runs its 4-bucket segmentation: members with a diagnosed NCD, complication-only claims (undiagnosed), both, and healthy — with spend per bucket. Computed in your browser; nothing is sent anywhere.','b2b.t3':'Report + 30-minute review','b2b.p3':'After leaving your contact, you get a report to share with management, and the Loop team models a capitation scenario for your cohort.',
+ 'py.maphelp':'Match your claims columns, then run the analysis. Members aged 21 or under are excluded (dependent-children filter).','py.resp':'Count COPD / asthma (J42–J47) as primary NCDs (industrial-cohort sensitivity)','py.run':'Run analysis','py.col.member':'Member ID','py.col.icd':'ICD-10 code','py.col.amount':'Claim amount (Rp)','py.col.age':'Age','py.col.date':'Claim date','py.none':'— none —',
+ 'py.k.members':'Members analyzed','py.k.addr':'Cohort Loop can manage','py.k.addrs':'members (Buckets A + B + C)','py.k.spend':'Claims spend in that cohort','py.k.spends':'of total claims','py.k.mult':'Cost per member vs healthy members','py.k.undiag':'Undiagnosed (Bucket B)','py.k.undiags':'complication claims with no NCD diagnosis',
+ 'py.bench':(m,s)=>`Loop benchmark on a working-age cohort: ~20% of members / ~34% of spend. Your cohort: ${m}% / ${s}%.`,
+ 'py.buckets':'4-bucket segmentation (waterfall, mutually exclusive)','py.b.A':'A · Primary NCD diagnosed','py.b.B':'B · Complications only (undiagnosed)','py.b.C':'C · Both','py.b.D':'D · Healthy / other',
+ 'py.th.b':'Bucket','py.th.m':'Members','py.th.mp':'% members','py.th.s':'Claims (Rp)','py.th.sp':'% spend','py.th.avg':'Avg / member','py.th.x':'× healthy',
+ 'py.attr':'Cost attribution per claim','py.a.prim':'Claims carrying a primary NCD code','py.a.comp':'Complication claims without a primary code','py.a.other':'Other claims',
+ 'py.top':'Largest conditions by spend','py.th.code':'Code','py.th.cond':'Condition','py.th.prog':'Loop program','py.th.claims':'Claims','py.progs':'Spend that maps to a Loop program (v3 grid)','py.demo.note':'Synthetic sample data (not real claims) — to show the shape of the analysis.','py.h2':'Claims Analysis',
+ 'py.wa':(n,m,s,b)=>`Hi Loop, I'm from an insurer/employer. I just analyzed claims data for ${n} members on the Loop website: ${m}% of members and ${s}% of spend fall in the NCD cohort (Buckets A+B+C), ${b}% undiagnosed. I'd like to discuss a capitation scenario.`,
+ 'py.err.cols':'ICD-10 code and claim amount columns are required. Map them above.','py.err.rows':'Need a header row and at least one data row.','py.err.file':'Could not read that file. Use PDF, photo, CSV or Excel.','py.st.parsed':(r)=>`${r} claim rows read. Check the column mapping, then run.`,'py.st.auto':(r)=>`${r} claim rows read and analyzed.`,
+ 'mc.h2':'Employee MCU Results','mc.k.n':'Employees analyzed','mc.k.red':'Need a doctor today','mc.k.reds':'critical values','mc.k.chronic':'Already have a chronic condition','mc.k.chronics':'diabetes / hypertension / cholesterol','mc.k.pre':'Still preventable','mc.k.pres':'prediabetes / lifestyle risk','mc.k.green':'Healthy','mc.tiers':'Risk-level distribution','mc.progs':'Programs needed','mc.table':'Per employee (red first)','mc.th.name':'Name / ID','mc.th.age':'Age','mc.th.tier':'Level','mc.th.glu':'Blood sugar','mc.th.bp':'Blood pressure','mc.th.ldl':'LDL','mc.th.prog':'Programs','mc.demo.note':'Synthetic sample data (not real employees).','mc.err.cols':'No lab result columns found (HbA1c, fasting glucose, blood pressure, cholesterol). Check the column headers in your file.','mc.st.done':(n)=>`${n} employees analyzed.`,'mc.st.multi':(n,t)=>`Reading file ${n} of ${t}…`,
+ 'mc.wa':(n,red,chron,pre)=>`Hi Loop, I just uploaded MCU results for ${n} employees on the Loop website: ${red} need a doctor now, ${chron} already have a chronic condition, ${pre} are still preventable. I'd like to discuss a program for our company.`,
+ tier:{red:'Red · urgent',amber:'Orange · serious',yellow:'Yellow · one condition',lime:'Light green · prevent',green:'Green · healthy'},
+ 'ft.sol':'Solutions','ft.corp':'Corporate','ft.about':'About Loop','ft.contact':'Contact Us','ft.disc':'This tool gives an initial explanation, not a diagnosis. Medical decisions remain with your doctor. If you have chest pain, shortness of breath, a severe headache or severe weakness, go to the nearest emergency room. © 2026 Loop Health Indonesia.',
+ 'wa.float':'Ask Loop','wa.floatmsg':'Hi Loop, I have a question about my MCU results',
+ 'r.h2':'Your Results','r.red':'See a doctor today:','r.redtail':'If you also have severe symptoms, go straight to the emergency room.','r.mets':(n)=>`You meet ${n} of the 5 metabolic syndrome criteria — a combination of waist size, glucose, cholesterol and blood pressure that make each other worse. This is the most common doorway into diabetes and heart disease.`,'r.fit':'What fits you','r.confirm':'· doctor to confirm','r.green.t':'Keep it up with the Loop app','r.green.p':'Track weight and activity, weekly health content, and a reminder for next year\'s MCU.','r.doc.t':'Start with a Loop doctor consultation','r.doc.p':'Some findings need a doctor\'s review before choosing a program. The first consultation is free.','r.excl':(rules,route)=>`Note: ${rules} — for this condition Loop will refer you to the right specialist (${route}).`,'r.start':'What you can start today','r.lk':'There is another finding (liver, kidney, thyroid, respiratory or mood). This is not a separate program — the Loop doctor reviews it at the first consultation and refers to a specialist where needed.',
+ tips:{dm:'Cut rice to one portion per meal, add vegetables, walk 30 minutes a day.',htn:'Log your blood pressure morning and evening for 7 days before seeing the doctor.',smoke:'Quitting smoking is the single change with the biggest impact — Loop has a 12-week program.',bmi:'Losing 5–7% of body weight in 6 months is enough to improve almost every number above.'},
+ prog:{DMP:['Diabetes Management Program','A nutrition coach every day in the app, your own doctor, generic medication at no extra cost. Members lower HbA1c by 1.2% on average.'],DPP:['Diabetes Prevention Program','Not diabetes yet, but the numbers are rising. A 6-month program to turn it around: diet, activity and HbA1c monitoring.'],HMP:['Blood Pressure & Cholesterol Program','Monitor blood pressure at home, bring cholesterol to target, the right generic medication, and doctor visits until it is under control — so your risk of heart attack and stroke goes down.']},
+ verdict:{red:['Some numbers need attention today','Several results are outside the safe range. Contact a doctor today — the Loop team can help you book.'],amber:['Needs serious attention','More than one condition should be managed starting now. The good news: all of them can be controlled.'],yellow:['One condition to manage','One thing should be monitored with a doctor from now on. Caught early, it is far easier to handle.'],lime:['Still preventable','No chronic disease yet, but early signs are there. This is the best moment to turn things around.'],green:['Your results look good','All key numbers are within the normal range. Keep it up, and repeat your MCU next year.']},
+ domain:{Glucose:'Blood sugar',BMI:'Body weight (BMI)','Blood pressure':'Blood pressure',Lipids:'LDL cholesterol',Kidney:'Kidney function',Liver:'Liver function',Mood:'Mood',Anxiety:'Anxiety',Tobacco:'Smoking'},
+ normal:{Glucose:'normal HbA1c < 5.7% · fasting < 100',BMI:'healthy 18.5–22.9 (Asian)','Blood pressure':'normal < 120/80',Lipids:'LDL ideal < 100',Kidney:'eGFR ≥ 90',Liver:'ALT/AST ≤ 40',Tobacco:'non-smoker'},
+ stage:{'T2D uncontrolled':'Diabetes · not controlled','T2D suboptimal':'Diabetes · needs better treatment','T2D controlled':'Diabetes · controlled','Prediabetes':'Prediabetes','Normal':'Normal','Crisis':'Very high · urgent','Severe HTN':'Severe hypertension','Stage 2':'Hypertension','Stage 1 / elevated':'Getting high','Elevated':'Slightly high','Very high':'Very high','High':'High','Borderline high':'Slightly high','Near-optimal':'Near ideal','Optimal':'Ideal','NAFLD':'Fatty liver','Raised transaminases':'Raised liver enzymes','Active smoker':'Active smoker','Underweight':'Underweight','Normal (18.5–22.9)':'Normal','Overweight (23–24.9 · Asian)':'Overweight','Obese I (25–29.9 · Asian)':'Obesity I','Obese II (30–34.9)':'Obesity II','Severe obesity (≥35)':'Severe obesity','Minimal':'Minimal','Mild':'Mild','Moderate':'Moderate','Severe':'Severe','Severe / safety':'Needs help now'},
+ wa:(name,verdict,parts,progs,co)=>`Hi Loop, I'm ${name||'(name)'} and I just checked my MCU results on the Loop website. Result: ${verdict}. ${parts}. Suggested program: ${progs||'doctor consultation'}. ${co?'From '+co+'. ':''}I would like a free consultation.`,
+ st:{reading:'Reading file…',unreadable:'Could not read that file.',thinking:'Loop is reading your results… (about 20 seconds · the first time asks your permission)',got:(n)=>`Read ${n} values. Results below.`,fail:'Could not read that file. Try a clearer photo or the original PDF.',noclaude:'Reading PDFs/photos works inside the Claude viewer. In this prototype, Excel/CSV still works, or try the example buttons.'},
+ err:{not_granted:'Claude access was not allowed on this page, so PDFs/photos cannot be read. Excel/CSV still works.',images_unavailable:'Photos cannot be read in this view. Upload a text PDF.',image_rejected:'That photo could not be read (format/size). Try a JPEG/PNG under 20 MB.',rate_limited:'Too many requests. Wait a moment and try again.',invalid_json:'We could not find lab values in that file. Make sure it is an MCU report.',refused:'That file could not be processed.'},
+ 'r.count':(n,m)=>n?`${n} of ${m} tests outside the normal range`:`All ${m} tests within the normal range`,expl:{Glucose:'Your average blood sugar over the last 3 months. The higher it is, the more strain on blood vessels, kidneys and eyes.','Blood pressure':'The pressure on your artery walls. Persistently high, it strains the heart and kidneys, usually without symptoms.',Lipids:'The \'bad\' cholesterol that builds up in artery walls. A main driver of heart attack and stroke.',BMI:'Weight relative to height. Cut-offs for Asian populations are stricter because diabetes risk starts earlier.',Kidney:'How well your kidneys filter blood. It declines slowly and silently; diabetes and hypertension are the usual causes.',Liver:'Liver enzymes. Usually raised by fatty liver, which improves with weight loss.',Tobacco:'The single change with the biggest effect on heart and stroke risk.'},rep:{title:'MCU Results Report',sub:'A first explanation of your check-up results and the Loop program that fits — not a diagnosis',cta:'Free consultation on WhatsApp',contact:'Contact us',wamsg:'Hi Loop, I received my MCU Results Report and would like a free consultation. Name:',for:'Prepared for',date:'Date',single:'Personal summary',multi:'Employee summary',claims:'Claims analysis',next:'Next steps',nextp:'The Loop team will contact you to walk through this report with a doctor and a coach. The first consultation is free, no obligation.',disc:'This report is not a diagnosis. It helps you understand the level of diabetes, hypertension and cholesterol and the Loop program that fits. Medical decisions remain with a doctor.',members:'Employees',value:'Value',status:'Status'}
+}};
+const PAGE='insurer';
+const OVR={id:{personal:{},
+corporate:{'hero.h1':'Unggah Hasil MCU Karyawan. Lihat Siapa yang Perlu Program — dan Program Apa.','hero.sub':'Untuk HR dan manajemen. Unggah rekap MCU per karyawan (Excel dari vendor MCU) atau beberapa PDF hasil MCU. Loop menunjukkan sebaran tingkat diabetes, hipertensi, dan kolesterol di perusahaan Anda, siapa yang perlu dokter segera, dan program mana yang dibutuhkan. Dihitung di browser Anda; data tidak dikirim ke mana pun.','hero.upload':'Unggah Hasil MCU','hero.demo':'Lihat Contoh','tool.h2':'Unggah Hasil MCU Karyawan','tool.drop':'Taruh file di sini — Excel, CSV, atau beberapa PDF','tool.dropsub':'Rekap MCU per karyawan dari vendor · atau beberapa PDF hasil MCU sekaligus','tool.notdx':'<b>Bukan diagnosis.</b> Alat ini membantu HR memahami tingkat diabetes, hipertensi, dan kolesterol di antara karyawan, dan program Loop mana yang dibutuhkan. Keputusan medis per individu tetap oleh dokter.','lead.h2':'Dapatkan Laporan untuk Manajemen','lead.p':'Isi kontak Anda. Kami kirim laporan lengkap yang bisa dibagikan ke manajemen, lalu tim Loop menghubungi Anda untuk membahas program di perusahaan Anda. Gratis.','lead.send':'Kirim Laporan Perusahaan','nav.mcu':'MCU Karyawan','pv.kicker':'Contoh hasil perusahaan','xr.h':'Contoh Laporan yang Anda Terima','xr.p':'Setelah mengisi kontak, HR menerima laporan seperti ini — siap dibagikan ke manajemen.'},
+insurer:{'hero.h1':'Unggah Data Klaim. Lihat Berapa Persen Peserta dan Biaya yang Bisa Ditangani Loop.','hero.sub':'Untuk asuransi dan TPA. Unggah ekspor klaim dengan kode ICD-10. Loop menjalankan segmentasi 4-bucket: peserta dengan NCD terdiagnosis, yang hanya klaim komplikasi (belum terdiagnosis), keduanya, dan sehat — berikut biaya per bucket dan program yang dibutuhkan. Dihitung di browser Anda; data klaim tidak dikirim ke mana pun.','hero.upload':'Unggah Data Klaim','hero.demo':'Lihat Contoh','tool.h2':'Unggah Data Klaim','tool.drop':'Taruh file klaim di sini — CSV atau Excel','tool.dropsub':'Kolom minimal: ID peserta · kode ICD-10 · nilai klaim (Rp) · usia dan tanggal opsional','tool.notdx':'<b>Bukan diagnosis.</b> Alat ini membantu penjamin memahami beban diabetes, hipertensi, dan penyakit jantung di portofolio peserta, dan program Loop mana yang bisa menurunkan biaya. Keputusan medis per individu tetap oleh dokter.','lead.h2':'Dapatkan Laporan untuk Tim Anda','lead.p':'Isi kontak Anda. Kami kirim laporan analisis klaim yang bisa dibagikan ke tim aktuaria atau manajemen, lalu tim Loop menghubungi Anda untuk membahas skenario kapitasi. Gratis.','lead.send':'Kirim Laporan Klaim','nav.mcu':'Analisis Klaim','pv.kicker':'Contoh hasil portofolio','xr.h':'Contoh Laporan yang Anda Terima','xr.p':'Setelah mengisi kontak, Anda menerima laporan seperti ini — siap dibagikan ke tim aktuaria atau manajemen.','mc.wa':null}},
+en:{personal:{},
+corporate:{'hero.h1':'Upload Employee MCU Results. See Who Needs a Program — and Which One.','hero.sub':'For HR and management. Upload the per-employee MCU summary (the Excel from your MCU vendor) or several MCU PDFs. Loop shows the spread of diabetes, hypertension and cholesterol levels across your company, who needs a doctor now, and which programs are needed. Computed in your browser; nothing is sent anywhere.','hero.upload':'Upload MCU Results','hero.demo':'See Example','tool.h2':'Upload Employee MCU Results','tool.drop':'Drop files here — Excel, CSV, or several PDFs','tool.dropsub':'Per-employee MCU summary from your vendor · or several MCU PDFs at once','tool.notdx':'<b>Not a diagnosis.</b> This tool helps HR understand the level of diabetes, hypertension and cholesterol among employees, and which Loop programs are needed. Individual medical decisions remain with a doctor.','lead.h2':'Get a Report for Management','lead.p':'Leave your contact details. We send you a full report you can share with management, and the Loop team gets in touch to discuss a program for your company. Free.','lead.send':'Send Company Report','nav.mcu':'Employee MCU','pv.kicker':'Sample company result','xr.h':'The Report You Get Back','xr.p':'After leaving your contact details, HR receives a report like this — ready to share with management.'},
+insurer:{'hero.h1':'Upload Claims Data. See What Share of Members and Spend Loop Can Manage.','hero.sub':'For insurers and TPAs. Upload a claims export with ICD-10 codes. Loop runs its 4-bucket segmentation: members with a diagnosed NCD, complication-only claims (undiagnosed), both, and healthy — with spend per bucket and the programs needed. Computed in your browser; claims data is not sent anywhere.','hero.upload':'Upload Claims Data','hero.demo':'See Example','tool.h2':'Upload Claims Data','tool.drop':'Drop your claims file here — CSV or Excel','tool.dropsub':'Minimum columns: member ID · ICD-10 code · claim amount (Rp) · age and date optional','tool.notdx':'<b>Not a diagnosis.</b> This tool helps payers understand the burden of diabetes, hypertension and heart disease in a member portfolio, and which Loop programs can lower cost. Individual medical decisions remain with a doctor.','lead.h2':'Get a Report for Your Team','lead.p':'Leave your contact details. We send you a claims analysis report you can share with actuarial or management, and the Loop team gets in touch to discuss a capitation scenario. Free.','lead.send':'Send Claims Report','nav.mcu':'Claims Analysis','pv.kicker':'Sample portfolio result','xr.h':'The Report You Get Back','xr.p':'After leaving your contact details, you receive a report like this — ready to share with actuarial or management.','mc.wa':null}}};
+for(const L of ['id','en']){ const o=OVR[L][PAGE]||{}; for(const k in o) if(o[k]!==null) I18N[L][k]=o[k]; }
+let lang='id'; try{ const s=localStorage.getItem('loop-mcu-lang'); if(s==='en'||s==='id') lang=s; }catch(e){}
+const T=()=>I18N[lang];
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let mode=null; // 'single' | 'multi' | 'claims'
+const PUBLIC_PROGS=['DMP','DPP','HMP']; // Loop sells three programs; cholesterol/heart is part of the blood-pressure program
+const PROG_ALIAS={CMP:'HMP'};
+const pubProgs=R=>R.enrolled.concat(R.candidates).map(c=>PROG_ALIAS[c]||c).filter((c,i,a)=>a.indexOf(c)===i&&PUBLIC_PROGS.includes(c));
+const hasLK=R=>R.enrolled.concat(R.candidates).some(c=>c==='LKMP'||c==='WMP');
+var applyLang=function(){ document.documentElement.lang=lang; const d=T();
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ const v=d[el.dataset.i18n]; if(typeof v==='string') el.innerHTML=v; });
+  $('langId').setAttribute('aria-pressed',lang==='id'); $('langEn').setAttribute('aria-pressed',lang==='en');
+  $('waFloat').href='https://wa.me/6281112588833?text='+encodeURIComponent(d['wa.floatmsg']);
+  if(!statusCustom) $('status').textContent=d['tool.status0'];
+  if(pClaims) buildMap(pClaims.hdr,true);
+  if(mode==='single'&&lastP) render(lastP,true); else if(mode==='multi'&&multiLast) renderMulti(multiLast,true); else if(mode==='claims'&&pLast) renderPayer(pLast); updateWA(); }
+function setLang(l){ lang=l; try{ localStorage.setItem('loop-mcu-lang',l); }catch(e){} applyLang(); }
+$('langId').addEventListener('click',()=>setLang('id')); $('langEn').addEventListener('click',()=>setLang('en'));
+
+/* ======================= SINGLE ======================= */
+const VBG={red:'linear-gradient(135deg,#d9534f,#b83b38)',amber:'linear-gradient(135deg,#e07a1f,#c4621a)',yellow:'linear-gradient(135deg,#d99a00,#b88100)',lime:'linear-gradient(135deg,#7cb342,#5f9230)',green:'linear-gradient(135deg,#33c1b1,#239d8f)'};
+const VIC={red:'!',amber:'▲',yellow:'●',lime:'↗',green:'✓'}; const TC={red:'#d9534f',amber:'#e07a1f',yellow:'#d99a00',lime:'#7cb342',green:'#33c1b1'};
+function chipFor(f){ if(f.color==='green') return 'ok'; if(f.color==='yellow') return 'warn'; return 'bad'; }
+// Range bars: [min,max] scale and colour bands [upper bound, colour]; the dot marks the member's value. Thresholds = the signed threshold table.
+const RANGES={Glucose:{min:4,max:12,bands:[[5.7,'#2a9d6f'],[6.5,'#d99a00'],[9.5,'#e07a1f'],[12,'#d9534f']],pick:(p,R)=>p.hba1c,alt:{min:60,max:260,bands:[[100,'#2a9d6f'],[126,'#d99a00'],[200,'#e07a1f'],[260,'#d9534f']],pick:(p,R)=>p.fpg}},
+ 'Blood pressure':{min:90,max:200,bands:[[120,'#2a9d6f'],[140,'#d99a00'],[160,'#e07a1f'],[200,'#d9534f']],pick:(p,R)=>p.sbp},
+ Lipids:{min:50,max:250,bands:[[100,'#2a9d6f'],[130,'#d99a00'],[160,'#e07a1f'],[250,'#d9534f']],pick:(p,R)=>p.ldl},
+ BMI:{min:15,max:40,bands:[[18.5,'#7aa7d9'],[23,'#2a9d6f'],[25,'#d99a00'],[30,'#e07a1f'],[40,'#d9534f']],pick:(p,R)=>R.derived.bmi},
+ Kidney:{min:0,max:130,bands:[[30,'#d9534f'],[60,'#e07a1f'],[90,'#d99a00'],[130,'#2a9d6f']],pick:(p,R)=>R.derived.egfr},
+ Liver:{min:0,max:200,bands:[[40,'#2a9d6f'],[80,'#d99a00'],[200,'#e07a1f']],pick:(p,R)=>Math.max(p.alt||0,p.ast||0)||null}};
+function rangeBar(domain,p,R){ let cfg=RANGES[domain]; if(!cfg) return ''; let v=cfg.pick(p,R); if(v==null&&cfg.alt){ cfg=cfg.alt; v=cfg.pick(p,R); } if(v==null||isNaN(v)) return '';
+  const span=cfg.max-cfg.min; const pos=Math.max(0,Math.min(1,(v-cfg.min)/span)); let lo=cfg.min;
+  const segs=cfg.bands.map(([hi,c])=>{ const w=(Math.min(hi,cfg.max)-lo)/span*100; lo=Math.min(hi,cfg.max); return `<i style="flex:0 0 ${w}%;background:${c}"></i>`; }).join('');
+  return `<div class="rb" aria-hidden="true"><div class="rbt">${segs}</div><b style="left:${(pos*100).toFixed(1)}%"></b></div>`; }
+function attention(R){ const d=T(); const ks=R.findings.filter(f=>d.domain[f.domain]); const n=ks.filter(f=>f.color!=='green').length; return {n,m:ks.length}; }
+let lastP=null,lastR=null,statusCustom=false,multiLast=null,multiDemo=false;
+const READ_LABELS={age:'Usia/Age',height:'TB',weight:'BB',waist:'LP',sbp:'SBP',dbp:'DBP',hba1c:'HbA1c',fpg:'GDP',ogtt:'GD2PP',tc:'TC',ldl:'LDL',hdl:'HDL',tg:'TG',creat:'Cr',uacr:'ACR',alt:'SGPT',ast:'SGOT',plt:'PLT',ua:'UA',tsh:'TSH',k:'K',hb:'Hb',wbc:'WBC'};
+function showRead(p){ const el=$('readvals'); const items=p?Object.keys(READ_LABELS).filter(k=>p[k]!=null).map(k=>`<span>${READ_LABELS[k]} ${p[k]}</span>`):[]; el.innerHTML=items.length?`<span style="background:none;color:var(--muted);padding-left:0">${T()['tool.read']}</span>`+items.join(''):''; }
+function showLead(){ $('stepLead').hidden=false; $('reportView').hidden=true; $('reportView').innerHTML=''; $('lstatus').textContent=''; }
+function render(p,quiet){ mode='single'; lastP=p; const R=analyze(p); lastR=R; const d=T(); const V=d.verdict[R.tier.key];
+  const att=attention(R); let h=`<h2 class="center">${d['r.h2']}</h2><div class="verdict" style="background:${VBG[R.tier.key]}"><div class="dot">${VIC[R.tier.key]}</div><div><h2>${V[0]}</h2><p>${V[1]}</p><p class="cnt">${d['r.count'](att.n,att.m)}</p></div></div>`;
+  const reds=R.flags.filter(f=>f.level==='red'); if(reds.length) h+=`<div class="alert"><b>${d['r.red']}</b> ${reds.map(f=>esc(f.text)).join(' · ')}. ${d['r.redtail']}</div>`;
+  const keep=R.findings.filter(f=>d.domain[f.domain]);
+  h+=`<div class="markers">${keep.map(f=>`<div class="mk"><div class="l">${d.domain[f.domain]}</div><div class="v">${f.domain==='Tobacco'?(lang==='id'?'Ya':'Yes'):esc(f.value.replace(/^(HbA1c|FPG|LDL|eGFR)\s/,''))} <span class="chip ${chipFor(f)}">${esc(d.stage[f.stage]||f.stage)}</span></div>${rangeBar(f.domain,p,R)}<div class="n">${d.normal[f.domain]||''}</div>${d.expl[f.domain]?`<div class="x">${d.expl[f.domain]}</div>`:''}</div>`).join('')}</div>`;
+  if(R.derived.mets.length>=3) h+=`<p class="note">${d['r.mets'](R.derived.mets.length)}</p>`;
+  const progs=pubProgs(R).filter((c,i,a)=>a.indexOf(c)===i);
+  h+=`<h3 class="sub">${d['r.fit']}</h3>`;
+  if(progs.length) h+=`<div class="progs">${progs.map(c=>`<div class="prog"><div class="ic">${c}</div><div><b>${d.prog[c][0]}${R.candidates.includes(c)?' <span style="font-weight:500;font-size:12px;color:var(--muted)">'+d['r.confirm']+'</span>':''}</b><p>${d.prog[c][1]}</p></div></div>`).join('')}</div>`;
+  else if(R.tier.key==='green') h+=`<div class="progs"><div class="prog"><div class="ic">✓</div><div><b>${d['r.green.t']}</b><p>${d['r.green.p']}</p></div></div></div>`;
+  else h+=`<div class="progs"><div class="prog"><div class="ic">?</div><div><b>${d['r.doc.t']}</b><p>${d['r.doc.p']}</p></div></div></div>`;
+  if(hasLK(R)) h+=`<p class="note">${d['r.lk']}</p>`;
+  if(R.exclusions.length) h+=`<p class="note">${d['r.excl'](R.exclusions.map(x=>esc(x.rule)).join(' · '),esc(R.exclusions[0].route))}</p>`;
+  const tips=[]; if(R.derived.isDM||R.derived.preDM) tips.push(d.tips.dm); if(R.derived.htn) tips.push(d.tips.htn); if(p.smoker==='current') tips.push(d.tips.smoke); if(R.derived.bmi!=null&&R.derived.bmi>=25) tips.push(d.tips.bmi);
+  if(tips.length) h+=`<h3 class="sub">${d['r.start']}</h3><ul class="explain">${tips.map(t=>`<li>${t}</li>`).join('')}</ul>`;
+  $('results').innerHTML=h; $('results').hidden=false; showRead(p); if(!quiet){ showLead(); $('results').scrollIntoView({behavior:'smooth',block:'start'}); } updateWA(); }
+function summaryText(){ const d=T(); if(mode==='single'&&lastR){ const R=lastR,p=lastP; const parts=[]; if(p.hba1c!=null) parts.push(`HbA1c ${p.hba1c}%`); if(p.fpg!=null) parts.push(`${lang==='id'?'GDP':'FPG'} ${p.fpg}`); if(p.sbp!=null) parts.push(`${lang==='id'?'TD':'BP'} ${p.sbp}/${p.dbp}`); if(p.ldl!=null) parts.push(`LDL ${p.ldl}`); if(R.derived.bmi!=null) parts.push(`BMI ${R.derived.bmi}`); const progs=pubProgs(R).map(c=>d.prog[c][0]).join(', '); return d.wa($('lname').value.trim(),d.verdict[R.tier.key][0],parts.join(', '),progs,$('lco').value.trim()); }
+  if(mode==='multi'&&multiLast){ const A=aggMulti(multiLast); return d['mc.wa'](A.n,A.red,A.chronic,A.pre); }
+  if(mode==='claims'&&pLast){ const P=pLast; const pct=(a,b)=>b?Math.round(a/b*1000)/10:0; return d['py.wa'](P.N.toLocaleString(),pct(P.addrN,P.N),pct(P.addrS,P.totalSpend),pct(P.B.B.n,P.N)); }
+  return d['wa.floatmsg']; }
+function updateWA(){ $('waBtn').href='https://wa.me/6281112588833?text='+encodeURIComponent(summaryText()); }
+['lname','lco'].forEach(id=>$(id).addEventListener('input',updateWA));
+const DEMO1={name:'Budi',age:47,sex:'M',height:168,weight:82,waist:96,sbp:152,dbp:96,hba1c:7.8,fpg:142,tc:215,ldl:145,hdl:38,tg:190,ua:7.4,alt:48,ast:36,plt:240,creat:0.95,smoker:'current',bpconf:false,dx:{},meds:{},excl:{}};
+if($('demo1')) $('demo1').addEventListener('click',()=>render(Object.assign({},DEMO1))); $('heroDemo').addEventListener('click',()=>{ if(PAGE==='corporate') loadSheet(sampleMCU(),true); else if(PAGE==='insurer') loadSheet(sampleClaims(),true); else render(Object.assign({},DEMO1)); });
+
+/* ======================= UPLOAD DISPATCH ======================= */
+const samplerP=(window.claude&&typeof window.claude.use==='function')?window.claude.use('sample').catch(()=>null):Promise.resolve(null);
+const downloadsP=(window.claude&&typeof window.claude.use==='function')?window.claude.use('downloads').catch(()=>null):Promise.resolve(null);
+const EXTRACT_PROMPT=`You are reading an Indonesian or English medical check-up (MCU) laboratory report. Extract values into ONE JSON object with exactly these keys; null when absent; numbers only after converting units.
+Keys: name, age (years), sex ("M"/"F"; Laki-laki/Pria=M, Perempuan/Wanita=F), height (cm), weight (kg), waist (cm, lingkar perut/pinggang), sbp, dbp (mmHg), hba1c (% NGSP), fpg (mg/dL gula darah puasa/GDP), ogtt (mg/dL gula darah 2 jam PP), rbg (mg/dL gula darah sewaktu), tc, ldl, hdl, tg (mg/dL), creat (mg/dL kreatinin), uacr (mg/g), alt (SGPT U/L), ast (SGOT U/L), plt (x10^9/L trombosit), ua (mg/dL asam urat), tsh, k (kalium), hb, wbc, hbsag (bool), hcv (bool), ecg ("normal","lvh","af","mi","isch","other" or null), cxr ("normal","mass","cardio","other" or null), usg ("normal","steatosis" or null; perlemakan hati = steatosis), smoker ("never","former","current" or null), dx (array from: dm, predm, htn, dyslip, ihd, cvevent, hf12, af, ckd, nafld, hypothy, copd, asthma, mdd, anx, cancer, gout), meds (array from: insulin, oad, glp, antihtn, statin, anticoag, levo, inhaler, ssri, steroid), notes (string).
+Conversions: glucose mmol/L x18; cholesterol/LDL/HDL mmol/L x38.67; TG mmol/L x88.57; creatinine umol/L /88.4; platelets per uL /1000; HbA1c IFCC mmol/mol -> % = 0.0915*IFCC+2.15. Ignore reference ranges. Reply with only the JSON object.`;
+function setStatus(m,err){ statusCustom=true; const s=$('status'); s.textContent=m; s.classList.toggle('err',!!err); }
+async function readPdf(file){ const lib=window.pdfjsLib; if(!lib) throw new Error('pdf'); lib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; const doc=await lib.getDocument({data:await file.arrayBuffer()}).promise; let text=''; const n=Math.min(doc.numPages,8);
+  for(let i=1;i<=n;i++){ const pg=await doc.getPage(i); const tc=await pg.getTextContent(); let lastY=null,line=''; for(const it of tc.items){ const y=it.transform?Math.round(it.transform[5]):0; if(lastY!==null&&Math.abs(y-lastY)>3){ text+=line.trim()+'\n'; line=''; } line+=it.str+' '; lastY=y; } text+=line.trim()+'\n'; }
+  const imgs=[]; if(text.replace(/\s/g,'').length<150){ for(let i=1;i<=Math.min(n,4);i++){ const pg=await doc.getPage(i); const vp=pg.getViewport({scale:1.6}); const c=document.createElement('canvas'); c.width=vp.width; c.height=vp.height; await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise; imgs.push(await new Promise(r=>c.toBlob(r,'image/png'))); } }
+  return {text,imgs}; }
+function jsonToPatient(j,fallbackName){ const n=v=>(v===null||v===undefined||v===''||isNaN(+v))?null:+v; const p={name:j.name||fallbackName||'',dx:{},meds:{},excl:{}};
+  ['age','height','weight','waist','sbp','dbp','hba1c','fpg','ogtt','rbg','tc','ldl','hdl','tg','creat','uacr','alt','ast','plt','ua','tsh','k','hb','wbc'].forEach(k=>p[k]=n(j[k]));
+  p.sex=String(j.sex||'M').toUpperCase().startsWith('F')?'F':'M'; p.smoker=['never','former','current'].includes(j.smoker)?j.smoker:'never'; p.ecg=j.ecg||''; p.cxr=j.cxr||''; p.usg=j.usg||''; p.hbsag=!!j.hbsag; p.hcv=!!j.hcv; p.bpconf=false;
+  (Array.isArray(j.dx)?j.dx:[]).forEach(x=>p.dx[x]=true); (Array.isArray(j.meds)?j.meds:[]).forEach(m=>p.meds[m]=true); return p; }
+async function extractOne(sampler,text,images){ const opts={modelTier:'default'}; if(images.length){ const lim=await sampler.limits().catch(()=>null); if(!lim||!lim.images) throw {code:'images_unavailable'}; opts.images=images.slice(0,lim.images.maxCount||4); }
+  return sampler.json(EXTRACT_PROMPT+(text?`\n\nREPORT TEXT:\n${text.slice(0,60000)}`:'\n\nThe report is in the attached image(s).'),opts); }
+async function handleAny(files){ const list=Array.from(files||[]); if(!list.length) return; const d=T(); const isPdf=f=>f.type==='application/pdf'||/\.pdf$/i.test(f.name); const isImg=f=>/^image\//.test(f.type); const isSheet=f=>/\.(csv|xlsx|xls)$/i.test(f.name)||f.type==='text/csv';
+  const sheets=list.filter(isSheet), pdfs=list.filter(isPdf), imgs=list.filter(isImg);
+  try{
+    if(sheets.length){ if(PAGE==='personal'){ setStatus(d['sheetonpersonal'],true); return; } setStatus(d.st.reading); const csv=await readSheet(sheets[0]); loadSheet(csv,false); return; }
+    if(PAGE==='insurer'){ setStatus(d['pdfonins'],true); return; }
+    if(!pdfs.length&&!imgs.length){ setStatus(d['py.err.file'],true); return; }
+    const sampler=await samplerP; if(!sampler) throw {code:'not_granted'};
+    if(pdfs.length>1){ // several people
+      const members=[]; const total=pdfs.length+(imgs.length?1:0);
+      for(let i=0;i<pdfs.length;i++){ setStatus(d['mc.st.multi'](i+1,total)); const r=await readPdf(pdfs[i]); const j=await extractOne(sampler,r.text,r.imgs); members.push(jsonToPatient(j,pdfs[i].name.replace(/\.pdf$/i,''))); }
+      if(imgs.length){ setStatus(d['mc.st.multi'](total,total)); const j=await extractOne(sampler,'',imgs); members.push(jsonToPatient(j,'')); }
+      multiDemo=false; renderMulti(members.map(p=>({p,R:analyze(p)}))); setStatus(d['mc.st.done'](members.length)); showRead(null); return; }
+    let text='',images=[]; setStatus(d.st.reading); if(pdfs.length){ const r=await readPdf(pdfs[0]); text=r.text; images.push(...r.imgs); } images.push(...imgs);
+    if(!text.trim()&&!images.length){ setStatus(d.st.unreadable,true); return; }
+    setStatus(d.st.thinking); const j=await extractOne(sampler,text,images); const p=jsonToPatient(j,''); if(j.name) $('lname').value=j.name;
+    setStatus(d.st.got(Object.keys(p).filter(k=>typeof p[k]==='number').length)); render(p);
+  }catch(e){ console.warn(e); setStatus(d.err[e&&e.code]||d.st.fail,true); } finally{ $('file').value=''; } }
+$('file').addEventListener('change',e=>handleAny(e.target.files));
+{ const el=$('drop'); ['dragenter','dragover'].forEach(ev=>el.addEventListener(ev,e=>{e.preventDefault();el.classList.add('drag');})); ['dragleave','drop'].forEach(ev=>el.addEventListener(ev,e=>{e.preventDefault();el.classList.remove('drag');})); el.addEventListener('drop',e=>handleAny(e.dataTransfer.files)); el.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); $('file').click(); } }); }
+function readSheet(file){ return new Promise((res,rej)=>{ const rd=new FileReader(); rd.onerror=()=>rej(new Error('read')); rd.onload=()=>{ try{ if(/\.csv$/i.test(file.name)||file.type==='text/csv'){ res(String(rd.result)); return; } const wb=XLSX.read(rd.result,{type:'array'}); res(XLSX.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[0]])); }catch(e){ rej(e); } }; if(/\.csv$/i.test(file.name)||file.type==='text/csv') rd.readAsText(file); else rd.readAsArrayBuffer(file); }); }
+function parseCSV(text){ const rows=[]; let row=[],cell='',q=false; for(let i=0;i<text.length;i++){ const c=text[i]; if(q){ if(c==='"'){ if(text[i+1]==='"'){cell+='"';i++;} else q=false; } else cell+=c; } else { if(c==='"') q=true; else if(c===','||c===';'||c==='\t'){row.push(cell);cell='';} else if(c==='\n'||c==='\r'){ if(c==='\r'&&text[i+1]==='\n') i++; row.push(cell); rows.push(row); row=[]; cell=''; } else cell+=c; } } if(cell!==''||row.length){row.push(cell);rows.push(row);} return rows.filter(r=>r.some(x=>String(x).trim()!=='')); }
+
+/* ======================= SHEET DETECTION ======================= */
+const MCU_SYN={name:/nama|^name$|employee|karyawan|peserta|member/i,age:/usia|umur|^age$/i,sex:/kelamin|^sex$|gender|^jk$/i,height:/tinggi|height|^tb$/i,weight:/berat|weight|^bb$/i,waist:/lingkar|waist/i,sbp:/sistol|systol|^sbp$|atas/i,dbp:/diastol|^dbp$|bawah/i,bp:/tekanan.?darah|blood.?pressure|^bp$|^td$|tensi/i,hba1c:/hba1c|a1c/i,fpg:/gdp|puasa|fasting|^fpg$|^fbs$|^fbg$|glukosa.?puasa/i,ogtt:/2.?jam|2hpp|ogtt|gd2pp|2-?h/i,tc:/kolesterol.?total|total.?chol|^tc$|^cholesterol$|^kolesterol$/i,ldl:/ldl/i,hdl:/hdl/i,tg:/trigli|^tg$/i,creat:/kreatinin|creatinin|^creat$|^cr$/i,alt:/sgpt|^alt$/i,ast:/sgot|^ast$/i,ua:/asam.?urat|uric|^ua$/i,plt:/trombosit|platelet|^plt$/i,smoker:/rokok|smok/i};
+function detectSheet(rows){ const hdr=rows[0].map(h=>String(h).trim()); const low=hdr.map(h=>h.toLowerCase());
+  const icdCol=low.findIndex(h=>/icd|diagnos|kode|^dx$/.test(h)); let icdVals=0; if(icdCol>=0) icdVals=rows.slice(1,30).filter(r=>/^[A-Z]\d\d/i.test(String(r[icdCol]||'').trim())).length;
+  const amtCol=low.findIndex(h=>/amount|biaya|nominal|klaim|claim|billed|cost|total|^rp$|nilai|jumlah/.test(h));
+  const mcuHits=Object.keys(MCU_SYN).filter(k=>!['name','age','sex','smoker'].includes(k)&&low.some(h=>MCU_SYN[k].test(h))).length;
+  if(icdCol>=0&&icdVals>=3&&mcuHits<2) return 'claims'; if(mcuHits>=2) return 'mcu'; if(icdCol>=0&&icdVals>=3) return 'claims'; return 'unknown'; }
+function rowToPatientSheet(hdr,r,map){ const n=v=>{ const s=String(v??'').trim().replace(',','.'); return s===''||isNaN(+s)?null:+s; }; const g=k=>map[k]>=0?r[map[k]]:''; const p={name:String(g('name')||'').trim(),dx:{},meds:{},excl:{},bpconf:false,ecg:'',cxr:'',usg:''};
+  ['age','height','weight','waist','sbp','dbp','hba1c','fpg','ogtt','tc','ldl','hdl','tg','creat','alt','ast','ua','plt'].forEach(k=>p[k]=n(g(k)));
+  if((p.sbp==null||p.dbp==null)&&map.bp>=0){ const m=String(r[map.bp]||'').match(/(\d{2,3})\s*[\/\\-]\s*(\d{2,3})/); if(m){ p.sbp=+m[1]; p.dbp=+m[2]; } }
+  const sx=String(g('sex')||'').trim().toUpperCase(); p.sex=(sx.startsWith('F')||sx.startsWith('P')||sx.startsWith('W'))?'F':'M';
+  const sm=String(g('smoker')||'').trim().toLowerCase(); p.smoker=/^(ya|yes|y|1|true|current|aktif|perokok)$/.test(sm)?'current':/former|dulu|mantan|ex/.test(sm)?'former':'never'; return p; }
+async function loadSheet(csv,demo){ const d=T(); const rows=parseCSV(csv); if(rows.length<2){ setStatus(d['py.err.rows'],true); return; } let kind=detectSheet(rows);
+  if(kind==='unknown'){ const sampler=await samplerP; if(sampler){ try{ const ans=await sampler.json(`Classify this spreadsheet header as "claims" (insurance claims with ICD-10 diagnosis codes) or "mcu" (medical check-up lab results per person) and map its columns. Reply with only JSON {"kind":"claims"|"mcu","map":{"<target>":"<source header>"}} where targets for mcu are name, age, sex, height, weight, waist, sbp, dbp, bp, hba1c, fpg, ogtt, tc, ldl, hdl, tg, creat, alt, ast, ua, plt, smoker and for claims are member, icd, amount, age, date. Only confident matches.\nHEADER: ${rows[0].join(' | ')}\nROW 1: ${rows[1].join(' | ')}\nROW 2: ${(rows[2]||[]).join(' | ')}`,{modelTier:'quick'}); if(ans&&ans.kind){ kind=ans.kind; if(ans.map) rows[0]=rows[0].map(h=>{ const t=Object.keys(ans.map).find(k=>ans.map[k]===h); return t||h; }); } }catch(e){ console.warn(e); } } }
+  if(kind==='claims'){ if(PAGE==='corporate'&&!demo){ setStatus(d['notcorp'],true); return; } loadClaimsCSV(rows,demo); return; }
+  if(kind==='mcu'&&PAGE==='insurer'&&!demo){ setStatus(d['notins'],true); return; }
+  if(kind==='mcu'){ const hdr=rows[0].map(h=>String(h).trim()); const low=hdr.map(h=>h.toLowerCase()); const map={}; Object.keys(MCU_SYN).forEach(k=>map[k]=low.findIndex(h=>MCU_SYN[k].test(h))); if(map.sbp>=0&&map.dbp<0&&map.sbp===map.bp) map.sbp=-1;
+    const members=rows.slice(1).map((r,i)=>{ const p=rowToPatientSheet(hdr,r,map); if(!p.name) p.name=(lang==='id'?'Karyawan ':'Employee ')+(i+1); return {p,R:analyze(p)}; }).filter(m=>['hba1c','fpg','sbp','ldl','tc'].some(k=>m.p[k]!=null));
+    if(!members.length){ setStatus(d['mc.err.cols'],true); return; } multiDemo=demo; renderMulti(members); setStatus(d['mc.st.done'](members.length)); showRead(null); return; }
+  setStatus(d['mc.err.cols'],true); }
+
+/* ======================= MULTI (EMPLOYEE MCU) ======================= */
+function aggMulti(list){ const A={n:list.length,tiers:{red:0,amber:0,yellow:0,lime:0,green:0},progs:{},red:0,chronic:0,pre:0,green:0}; list.forEach(({R})=>{ A.tiers[R.tier.key]++; if(R.tier.key==='red') A.red++; if(R.tier.key==='amber'||R.tier.key==='yellow') A.chronic++; if(R.tier.key==='lime') A.pre++; if(R.tier.key==='green') A.green++; pubProgs(R).forEach(c=>A.progs[c]=(A.progs[c]||0)+1); }); return A; }
+function renderMulti(list,quiet){ mode='multi'; multiLast=list; const d=T(); const A=aggMulti(list); const pct=v=>Math.round(v/A.n*100); const order={red:0,amber:1,yellow:2,lime:3,green:4};
+  let h=`<h2 class="center">${d['mc.h2']}</h2>${multiDemo?`<p class="note" style="text-align:center;margin:-20px 0 14px;color:var(--muted)">${d['mc.demo.note']}</p>`:''}`;
+  h+=`<div class="kpis"><div class="kpi"><div class="l">${d['mc.k.n']}</div><div class="v">${A.n}</div></div><div class="kpi"><div class="l">${d['mc.k.red']}</div><div class="v" style="color:var(--bad)">${A.red}</div><div class="s">${d['mc.k.reds']}</div></div><div class="kpi"><div class="l">${d['mc.k.chronic']}</div><div class="v">${A.chronic}</div><div class="s">${d['mc.k.chronics']}</div></div><div class="kpi"><div class="l">${d['mc.k.pre']}</div><div class="v">${A.pre}</div><div class="s">${d['mc.k.pres']}</div></div><div class="kpi"><div class="l">${d['mc.k.green']}</div><div class="v">${A.green}</div></div></div>`;
+  h+=`<div class="card"><h3>${d['mc.tiers']}</h3><div class="bar">${['red','amber','yellow','lime','green'].filter(k=>A.tiers[k]).map(k=>`<div style="flex:${A.tiers[k]};background:${TC[k]}">${pct(A.tiers[k])}%</div>`).join('')}</div><div class="legend">${['green','lime','yellow','amber','red'].map(k=>`<span><i style="background:${TC[k]}"></i>${d.tier[k]} · ${A.tiers[k]}</span>`).join('')}</div></div>`;
+  const progs=Object.entries(A.progs).sort((a,b)=>b[1]-a[1]);
+  h+=`<div class="card" style="margin-top:14px"><h3>${d['mc.progs']}</h3><div class="markers">${progs.map(([c,n])=>`<div class="mk"><div class="l">${c}</div><div class="v">${n}</div><div class="n">${d.prog[c][0]} · ${pct(n)}%</div></div>`).join('')||'<p class="note">—</p>'}</div></div>`;
+  h+=`<div class="card" style="margin-top:14px"><h3>${d['mc.table']}</h3><div class="tablewrap"><table class="member"><thead><tr><th>${d['mc.th.name']}</th><th>${d['mc.th.age']}</th><th>${d['mc.th.tier']}</th><th>${d['mc.th.glu']}</th><th>${d['mc.th.bp']}</th><th>${d['mc.th.ldl']}</th><th>${d['mc.th.prog']}</th></tr></thead><tbody>`;
+  list.slice().sort((a,b)=>order[a.R.tier.key]-order[b.R.tier.key]).forEach(({p,R})=>{ const f=dom=>R.findings.find(x=>x.domain===dom); const g=f('Glucose'),b=f('Blood pressure'),l=f('Lipids');
+    h+=`<tr><td>${esc(p.name||'—')}</td><td class="num">${p.age??'—'}${p.sex?'/'+p.sex:''}</td><td><span class="chip" style="background:${TC[R.tier.key]};color:#fff">${d.tier[R.tier.key].split(' ·')[0]}</span></td><td>${g?esc(g.value.replace(/^(HbA1c|FPG)\s/,''))+' · '+esc(d.stage[g.stage]||g.stage):'—'}</td><td>${b?esc(b.value)+' · '+esc(d.stage[b.stage]||b.stage):'—'}</td><td>${l?esc(l.value.replace(/^LDL\s/,'')):'—'}</td><td>${pubProgs(R).join(' + ')||'—'}</td></tr>`; });
+  h+=`</tbody></table></div></div>`;
+  $('results').innerHTML=h; $('results').hidden=false; if(!quiet){ showLead(); $('results').scrollIntoView({behavior:'smooth',block:'start'}); } updateWA(); }
+function mulberry(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function sampleMCU(){ const rnd=mulberry(20261015); const N=60; const first=['Budi','Siti','Agus','Dewi','Rudi','Ratna','Hendra','Yuni','Eko','Fitri','Andi','Lina','Joko','Maya','Bayu','Nur','Dian','Rizal','Wati','Tono']; const last=['Santoso','Rahayu','Wijaya','Lestari','Hartono','Pratama','Sari','Kusuma','Saputra','Hidayat']; const norm=(m,s)=>m+s*(rnd()+rnd()+rnd()-1.5)*1.63; const r1=v=>Math.round(v*10)/10;
+  const rows=[['Nama','Usia','Jenis Kelamin','Tinggi (cm)','Berat (kg)','Lingkar Perut','Tekanan Darah','HbA1c','Gula Darah Puasa','Kolesterol Total','LDL','HDL','Trigliserida','SGPT','Kreatinin','Asam Urat','Merokok']];
+  for(let i=0;i<N;i++){ const sex=rnd()<0.62?'L':'P'; const age=Math.round(22+rnd()*38); const h=Math.round(norm(sex==='L'?167:156,6)); const bmi=Math.max(17,norm(25.2,4)); const w=Math.round(bmi*(h/100)**2); const waist=Math.round((sex==='L'?82:72)+(bmi-22)*2.6+norm(0,4));
+    const dm=rnd()<0.08+(age-22)*0.004+(bmi>27?0.06:0); const pre=!dm&&rnd()<0.22+(bmi>25?0.08:0); const a1c=dm?r1(Math.max(6.5,norm(7.9,1.4))):pre?r1(5.7+rnd()*0.7):r1(Math.min(5.6,norm(5.3,0.25))); const fpg=Math.round(dm?Math.max(126,norm(160,30)):pre?100+rnd()*25:Math.min(99,norm(88,7)));
+    const htn=rnd()<0.14+(age-22)*0.006+(bmi>27?0.08:0); const sbp=Math.round(htn?Math.max(140,norm(152,12)):norm(119,9)); const dbp=Math.round(htn?Math.max(90,norm(94,6)):norm(76,6));
+    const tc=Math.round(norm(185,30)); const hdl=Math.round(Math.max(28,norm(sex==='L'?46:54,8))); const tg=Math.round(Math.max(50,norm(bmi>25?150:110,50))); const ldl=Math.round(Math.max(50,tc-hdl-tg/5));
+    rows.push([`${first[Math.floor(rnd()*first.length)]} ${last[Math.floor(rnd()*last.length)]}`,age,sex,h,w,waist,`${sbp}/${dbp}`,a1c,fpg,tc,ldl,hdl,tg,Math.round(Math.max(8,norm(bmi>25?38:24,14))),r1(Math.max(0.5,norm(sex==='L'?0.95:0.75,0.18))),r1(norm(sex==='L'?6.3:4.8,1.2)),sex==='L'&&rnd()<0.5?'Ya':'Tidak']); }
+  return rows.map(r=>r.join(',')).join('\n'); }
+if($('demo2')) $('demo2').addEventListener('click',()=>loadSheet(sampleMCU(),true));
+
+/* ======================= CLAIMS: 4-BUCKET ======================= */
+const A_CODES=['E10','E11','E12','E13','E14','I10','I11','I12','I13','I15','I25','E78'];
+const A_RESP=['J42','J43','J44','J45','J47'];
+const B_CODES=['E11.2','E11.3','E11.4','E11.5','E11.6','E11.7','H35.0','H36','G62','G63','N18','L02','L03','B37','M14.6','I79.2','K85','N39.0','I60','I61','I62','I63','I64','I65','I66','I67','I68','I69','I50','N17','I70','I71','I20','I21','I22','I23','I24','I26','I28','I46','I47','I48','I49','G45'];
+const PROG_MAP=[['E10','DMP'],['E11','DMP'],['E12','DMP'],['E13','DMP'],['E14','DMP'],['R73','DPP'],['E66','DPP'],['I10','HMP'],['I11','HMP'],['I12','HMP'],['I13','HMP'],['I15','HMP'],['I25','HMP'],['I48','HMP'],['I50','HMP'],['E78','HMP']];
+const COND={E10:'Type 1 diabetes',E11:'Type 2 diabetes',E12:'Diabetes (malnutrition-related)',E13:'Other diabetes',E14:'Diabetes, unspecified',I10:'Essential hypertension',I11:'Hypertensive heart disease',I12:'Hypertensive CKD',I13:'Hypertensive heart + CKD',I15:'Secondary hypertension',I25:'Chronic ischaemic heart disease',E78:'Dyslipidaemia',J42:'Chronic bronchitis',J43:'Emphysema',J44:'COPD',J45:'Asthma',J47:'Bronchiectasis',N18:'Chronic kidney disease',I50:'Heart failure',I48:'Atrial fibrillation',I20:'Angina',I21:'Acute MI',I63:'Ischaemic stroke',I64:'Stroke, unspecified',G62:'Polyneuropathy',H35:'Retinopathy',N39:'Urinary tract infection',L03:'Cellulitis',B37:'Candidiasis',K85:'Acute pancreatitis',G45:'TIA',I70:'Atherosclerosis',N17:'Acute kidney failure',I47:'Paroxysmal tachycardia',I49:'Cardiac arrhythmia',E66:'Obesity',R73:'Prediabetes',K76:'Fatty liver (NAFLD)',E03:'Hypothyroidism',F32:'Depressive episode',F33:'Recurrent depression',F41:'Anxiety disorder',J00:'Common cold',J06:'Upper respiratory infection',A09:'Gastroenteritis',M54:'Low back pain',R51:'Headache',Z00:'General medical exam',K29:'Gastritis',J02:'Pharyngitis',J20:'Acute bronchitis',K30:'Dyspepsia',B34:'Viral infection',H10:'Conjunctivitis',T78:'Allergic reaction'};
+function normCode(c){ c=String(c||'').toUpperCase().replace(/\s+/g,''); if(!/^[A-Z]\d\d/.test(c)) return null; if(c.length>3&&c[3]!=='.') c=c.slice(0,3)+'.'+c.slice(3); return c; }
+function splitCodes(s){ return String(s||'').split(/[,;|/]+/).map(normCode).filter(Boolean); }
+function matchAny(code,list){ return list.some(p=>code===p||code.startsWith(p)); }
+function parseAmount(v){ const s=String(v||'').trim(); if(!s) return 0; const neg=/^-|\(/.test(s); let digits=s.replace(/[^\d.,]/g,''); if(/,\d{1,2}$/.test(digits)&&!/\.\d{1,2}$/.test(digits)) digits=digits.replace(/\./g,'').replace(',','.'); else digits=digits.replace(/,/g,''); if((digits.match(/\./g)||[]).length>1) digits=digits.replace(/\./g,''); const n=parseFloat(digits); return isNaN(n)?0:(neg?-n:n); }
+let pClaims=null,pLast=null,pDemo=false;
+const GUESS={member:/member|peserta|employee|karyawan|nik|patient|pasien|^id$|_id|policy|polis/i,icd:/icd|diagnos|kode|code|^dx$/i,amount:/amount|biaya|nominal|klaim|claim|billed|cost|total|^rp$|nilai|jumlah/i,age:/^age$|usia|umur/i,date:/date|tanggal|tgl|service|period/i};
+function buildMap(hdr,keep){ const d=T(); const roles=['member','icd','amount','age','date']; const prev={}; if(keep) roles.forEach(r=>{ const s=$('map_'+r); if(s) prev[r]=s.value; });
+  $('pmapgrid').innerHTML=roles.map(r=>{ const guess=prev[r]!==undefined?prev[r]:String(hdr.findIndex(h=>GUESS[r].test(h))); return `<label>${d['py.col.'+r]}<select id="map_${r}"><option value="-1">${d['py.none']}</option>${hdr.map((h,i)=>`<option value="${i}" ${String(i)===guess?'selected':''}>${esc(h||('col '+(i+1)))}</option>`).join('')}</select></label>`; }).join(''); $('pmap').hidden=false; }
+function loadClaimsCSV(rows,demo){ const d=T(); pDemo=demo; pClaims={hdr:rows[0].map(h=>String(h).trim()),rows:rows.slice(1)}; buildMap(pClaims.hdr,false);
+  if(+$('map_icd').value>=0&&+$('map_amount').value>=0){ segment(); setStatus(d['py.st.auto'](pClaims.rows.length)); } else setStatus(d['py.st.parsed'](pClaims.rows.length)); }
+function segment(){ const d=T(); if(!pClaims) return; const m={}; ['member','icd','amount','age','date'].forEach(r=>m[r]=+$('map_'+r).value); if(m.icd<0||m.amount<0){ setStatus(d['py.err.cols'],true); return; }
+  pLast=segmentRows(pClaims.rows,m,$('resp').checked); renderPayer(pLast); showLead(); $('results').scrollIntoView({behavior:'smooth',block:'start'}); }
+function segmentRows(rows,m,resp){ const Alist=A_CODES.concat(resp?A_RESP:[]); const members=new Map(); let totalSpend=0,prim=0,comp=0,other=0,rowsUsed=0,excluded=0; const byCode={};
+  rows.forEach((r,i)=>{ const age=m.age>=0?parseFloat(r[m.age]):NaN; if(!isNaN(age)&&age<=21){ excluded++; return; } const id=m.member>=0?String(r[m.member]).trim()||('row'+i):('row'+i); const codes=splitCodes(r[m.icd]); const amt=parseAmount(r[m.amount]); rowsUsed++; totalSpend+=amt;
+    const hasA=codes.some(c=>matchAny(c,Alist)), hasB=codes.some(c=>matchAny(c,B_CODES)); if(hasA) prim+=amt; else if(hasB) comp+=amt; else other+=amt;
+    const mm=members.get(id)||{A:false,B:false,spend:0}; mm.A=mm.A||hasA; mm.B=mm.B||hasB; mm.spend+=amt; members.set(id,mm);
+    const seen=new Set(); codes.forEach(c=>{ const k3=c.slice(0,3); if(seen.has(k3)) return; seen.add(k3); const e=byCode[k3]||(byCode[k3]={spend:0,claims:0,members:new Set()}); e.spend+=amt/Math.max(1,codes.length); e.claims++; e.members.add(id); }); });
+  const B={A:{n:0,s:0},B:{n:0,s:0},C:{n:0,s:0},D:{n:0,s:0}}; members.forEach(mm=>{ const k=mm.A&&mm.B?'C':mm.A?'A':mm.B?'B':'D'; B[k].n++; B[k].s+=mm.spend; });
+  const N=members.size; const addrN=B.A.n+B.B.n+B.C.n, addrS=B.A.s+B.B.s+B.C.s; const avgD=B.D.n?B.D.s/B.D.n:0;
+  const progSpend={}; let progTotal=0; Object.entries(byCode).forEach(([k3,e])=>{ const pm=PROG_MAP.find(([p])=>k3===p.slice(0,3)); if(pm){ pm[1].split('+').forEach(pg=>progSpend[pg]=(progSpend[pg]||0)+e.spend/pm[1].split('+').length); progTotal+=e.spend; } });
+  const top=Object.entries(byCode).sort((a,b)=>b[1].spend-a[1].spend).slice(0,10);
+  return {N,B,addrN,addrS,avgD,totalSpend,prim,comp,other,rowsUsed,excluded,top,progSpend,progTotal,Alist}; }
+const fmtRp=v=>{ const a=Math.abs(v); return 'Rp '+(lang==='id'?(a>=1e9?(a/1e9).toFixed(2)+' M':a>=1e6?(a/1e6).toFixed(1)+' jt':a>=1e3?(a/1e3).toFixed(0)+' rb':a.toFixed(0)):(a>=1e9?(a/1e9).toFixed(2)+' bn':a>=1e6?(a/1e6).toFixed(1)+' m':a>=1e3?(a/1e3).toFixed(0)+' k':a.toFixed(0))); };
+function payerHTML(P,forReport,demoFlag){ const d=T(); const isDemo=demoFlag===undefined?pDemo:demoFlag; const rp=fmtRp; const pct=(a,b)=>b?Math.round(a/b*1000)/10:0; const pm=pct(P.addrN,P.N), ps=pct(P.addrS,P.totalSpend); const BC={A:'#313e72',B:'#e07a1f',C:'#d9534f',D:'#33c1b1'};
+  let h=`<h2 class="center">${d['py.h2']}</h2>`+(isDemo?`<p class="note" style="text-align:center;margin:-20px 0 12px;color:var(--muted)">${d['py.demo.note']}</p>`:'');
+  h+=`<div class="kpis"><div class="kpi"><div class="l">${d['py.k.members']}</div><div class="v">${P.N.toLocaleString()}</div><div class="s">${P.rowsUsed.toLocaleString()} ${lang==='id'?'klaim':'claims'}${P.excluded?` · ${P.excluded} ${lang==='id'?'baris usia ≤21 dikeluarkan':'rows aged ≤21 excluded'}`:''}</div></div><div class="kpi"><div class="l">${d['py.k.addr']}</div><div class="v">${pm}%</div><div class="s">${P.addrN.toLocaleString()} ${d['py.k.addrs']}</div></div><div class="kpi"><div class="l">${d['py.k.spend']}</div><div class="v">${ps}%</div><div class="s">${rp(P.addrS)} ${d['py.k.spends']} ${rp(P.totalSpend)}</div></div><div class="kpi"><div class="l">${d['py.k.mult']}</div><div class="v">${P.avgD&&P.addrN?(((P.addrS/P.addrN)/P.avgD).toFixed(1)+'×'):'—'}</div><div class="s">${P.addrN?rp(P.addrS/P.addrN):'—'} vs ${rp(P.avgD)}</div></div><div class="kpi"><div class="l">${d['py.k.undiag']}</div><div class="v">${pct(P.B.B.n,P.N)}%</div><div class="s">${P.B.B.n.toLocaleString()} ${d['py.k.undiags']}</div></div></div>`;
+  h+=`<p class="note" style="margin:0 0 18px">${d['py.bench'](pm,ps)}</p>`;
+  h+=`<div class="card"><h3>${d['py.buckets']}</h3><div class="bar">${['A','B','C','D'].filter(k=>P.B[k].n).map(k=>`<div style="flex:${P.B[k].n};background:${BC[k]}">${pct(P.B[k].n,P.N)}%</div>`).join('')}</div><div class="legend">${['A','B','C','D'].map(k=>`<span><i style="background:${BC[k]}"></i>${d['py.b.'+k]}</span>`).join('')}</div><div class="tablewrap" style="margin-top:14px"><table><thead><tr><th>${d['py.th.b']}</th><th class="num">${d['py.th.m']}</th><th class="num">${d['py.th.mp']}</th><th class="num">${d['py.th.s']}</th><th class="num">${d['py.th.sp']}</th><th class="num">${d['py.th.avg']}</th><th class="num">${d['py.th.x']}</th></tr></thead><tbody>${['A','B','C','D'].map(k=>{ const b=P.B[k]; const avg=b.n?b.s/b.n:0; return `<tr><td><span class="chip" style="background:${BC[k]};color:#fff">${k}</span> ${d['py.b.'+k].slice(4)}</td><td class="num">${b.n.toLocaleString()}</td><td class="num">${pct(b.n,P.N)}%</td><td class="num">${rp(b.s)}</td><td class="num">${pct(b.s,P.totalSpend)}%</td><td class="num">${rp(avg)}</td><td class="num">${P.avgD?(avg/P.avgD).toFixed(1)+'×':'—'}</td></tr>`; }).join('')}</tbody></table></div></div>`;
+  h+=`<div class="card" style="margin-top:14px"><h3>${d['py.attr']}</h3><div class="bar">${[['prim','#313e72'],['comp','#e07a1f'],['other','#c9ced6']].filter(([k])=>P[k]>0).map(([k,c])=>`<div style="flex:${P[k]};background:${c}">${pct(P[k],P.totalSpend)}%</div>`).join('')}</div><div class="legend"><span><i style="background:#313e72"></i>${d['py.a.prim']} · ${rp(P.prim)}</span><span><i style="background:#e07a1f"></i>${d['py.a.comp']} · ${rp(P.comp)}</span><span><i style="background:#c9ced6"></i>${d['py.a.other']} · ${rp(P.other)}</span></div></div>`;
+  h+=`<div class="card" style="margin-top:14px"><h3>${d['py.top']}</h3><div class="tablewrap"><table><thead><tr><th>${d['py.th.code']}</th><th>${d['py.th.cond']}</th><th>${d['py.th.b']}</th><th>${d['py.th.prog']}</th><th class="num">${d['py.th.m']}</th><th class="num">${d['py.th.claims']}</th><th class="num">${d['py.th.s']}</th><th class="num">${d['py.th.sp']}</th></tr></thead><tbody>${P.top.map(([k3,e])=>{ const bk=matchAny(k3,P.Alist)?'A':matchAny(k3,B_CODES)?'B':'—'; const pm2=PROG_MAP.find(([p])=>k3===p.slice(0,3)); return `<tr><td>${k3}</td><td>${COND[k3]||'—'}</td><td>${bk}</td><td>${pm2?`<span class="chip navy">${pm2[1]}</span>`:'—'}</td><td class="num">${e.members.size.toLocaleString()}</td><td class="num">${e.claims.toLocaleString()}</td><td class="num">${rp(e.spend)}</td><td class="num">${pct(e.spend,P.totalSpend)}%</td></tr>`; }).join('')}</tbody></table></div></div>`;
+  const progs=Object.entries(P.progSpend).sort((a,b)=>b[1]-a[1]); if(progs.length) h+=`<div class="card" style="margin-top:14px"><h3>${d['py.progs']} · ${pct(P.progTotal,P.totalSpend)}%</h3><div class="markers">${progs.map(([pg,s])=>`<div class="mk"><div class="l">${pg}</div><div class="v">${pct(s,P.totalSpend)}%</div><div class="n">${d.prog[pg]?d.prog[pg][0]:pg} · ${rp(s)}</div></div>`).join('')}</div></div>`;
+  return h; }
+function renderPayer(P){ mode='claims'; $('results').innerHTML=payerHTML(P); $('results').hidden=false; updateWA(); }
+$('prun').addEventListener('click',segment);
+function sampleClaims(){ const rnd=mulberry(20261015); const N=1200; const rows=[['member_id','age','icd_code','claim_amount','service_date']]; const pick=a=>a[Math.floor(rnd()*a.length)]; const acute=['J00','J06.9','A09','K29.7','M54.5','R51','J02.9','J20.9','K30','B34.9','H10.9','T78.4'];
+  for(let i=0;i<N;i++){ const age=Math.round(18+rnd()*42); const r=rnd(); const type=r<0.12?'A':r<0.16?'B':r<0.19?'C':'D'; const id='M'+String(10001+i); const n=type==='D'?1+Math.floor(rnd()*5):2+Math.floor(rnd()*6);
+    for(let k=0;k<n;k++){ let code,amt; const x=rnd(); if(type==='A'||type==='C'){ if(x<0.5){ code=pick(['E11.9','E11.65','I10','I10','E78.5','E78.2','I25.1']); amt=120e3+rnd()*380e3; } else if(type==='C'&&x<0.75){ code=pick(['I63.9','I21.9','I50.9','N18.3','G62.9','L03.1','I20.9']); amt=1e6+rnd()*4e6; } else { code=pick(acute); amt=120e3+rnd()*400e3; } }
+      else if(type==='B'){ if(x<0.35){ code=pick(['I63.9','I50.9','N18.3','G62.9','L03.1','N39.0','I20.9','H35.0']); amt=1e6+rnd()*4e6; } else { code=pick(acute); amt=120e3+rnd()*400e3; } }
+      else { code=pick(acute); amt=150e3+rnd()*500e3; if(rnd()<0.02){ code='Z00.0'; amt=900e3; } }
+      const mo=1+Math.floor(rnd()*12), dd=1+Math.floor(rnd()*28); rows.push([id,age,code,Math.round(amt),`2025-${String(mo).padStart(2,'0')}-${String(dd).padStart(2,'0')}`]); } }
+  return rows.map(r=>r.join(',')).join('\n'); }
+if($('demo3')) $('demo3').addEventListener('click',()=>loadSheet(sampleClaims(),true));
+
+/* ======================= REPORT (gated by contact) ======================= */
+function reportHTML(st){ st=st||{mode,lastP,lastR,multiLast,pLast,name:$('lname').value.trim(),co:$('lco').value.trim(),demo:false}; const {mode,lastP,lastR,multiLast,pLast}=st; const d=T(); const name=st.name, co=st.co; const date=new Date().toLocaleDateString(lang==='id'?'id-ID':'en-GB',{day:'numeric',month:'long',year:'numeric'});
+  let body=''; if(mode==='single'&&lastR){ const R=lastR,p=lastP; const V=d.verdict[R.tier.key]; const att=attention(R); body+=`<h2>${d.rep.single}${p.name?' · '+esc(p.name):''}</h2><div class="band" style="background:${TC[R.tier.key]}"><div class="bigv">${att.n}<small>/${att.m}</small></div><div><b>${V[0]}</b>${V[1]}<div class="cnt">${d['r.count'](att.n,att.m)}</div></div></div>`;
+    const reds=R.flags.filter(f=>f.level==='red'); if(reds.length) body+=`<p class="alert"><b>${d['r.red']}</b> ${reds.map(f=>esc(f.text)).join(' · ')}</p>`;
+    body+=`<div class="markers">${R.findings.filter(f=>d.domain[f.domain]).map(f=>`<div class="mk"><div class="l">${d.domain[f.domain]}</div><div class="v">${f.domain==='Tobacco'?(lang==='id'?'Ya':'Yes'):esc(f.value.replace(/^(HbA1c|FPG|LDL|eGFR)\s/,''))} <span class="chip ${chipFor(f)}">${esc(d.stage[f.stage]||f.stage)}</span></div>${rangeBar(f.domain,p,R)}<div class="n">${d.normal[f.domain]||''}</div>${d.expl[f.domain]?`<div class="x">${d.expl[f.domain]}</div>`:''}</div>`).join('')}</div>`;
+    const progs=pubProgs(R).filter((c,i,a)=>a.indexOf(c)===i); body+=`<h3>${d['r.fit']}</h3>${progs.length?`<ul>${progs.map(c=>`<li><b>${d.prog[c][0]}</b> — ${d.prog[c][1]}</li>`).join('')}</ul>`:`<p>${R.tier.key==='green'?d['r.green.p']:d['r.doc.p']}</p>`}`; if(hasLK(R)) body+=`<p>${d['r.lk']}</p>`;
+    const tips=[]; if(R.derived.isDM||R.derived.preDM) tips.push(d.tips.dm); if(R.derived.htn) tips.push(d.tips.htn); if(p.smoker==='current') tips.push(d.tips.smoke); if(R.derived.bmi!=null&&R.derived.bmi>=25) tips.push(d.tips.bmi); if(tips.length) body+=`<h3>${d['r.start']}</h3><ul>${tips.map(t=>`<li>${t}</li>`).join('')}</ul>`; }
+  else if(mode==='multi'&&multiLast){ const A=aggMulti(multiLast); const order={red:0,amber:1,yellow:2,lime:3,green:4}; body+=`<h2>${d.rep.multi}</h2><table><tr><th>${d['mc.k.n']}</th><th>${d['mc.k.red']}</th><th>${d['mc.k.chronic']}</th><th>${d['mc.k.pre']}</th><th>${d['mc.k.green']}</th></tr><tr><td>${A.n}</td><td>${A.red}</td><td>${A.chronic}</td><td>${A.pre}</td><td>${A.green}</td></tr></table>`;
+    body+=`<h3>${d['mc.progs']}</h3><ul>${Object.entries(A.progs).sort((a,b)=>b[1]-a[1]).map(([c,n])=>`<li><b>${d.prog[c][0]}</b> — ${n} (${Math.round(n/A.n*100)}%)</li>`).join('')}</ul>`;
+    body+=`<h3>${d['mc.table']}</h3><table><tr><th>${d['mc.th.name']}</th><th>${d['mc.th.age']}</th><th>${d['mc.th.tier']}</th><th>${d['mc.th.glu']}</th><th>${d['mc.th.bp']}</th><th>${d['mc.th.ldl']}</th><th>${d['mc.th.prog']}</th></tr>${multiLast.slice().sort((a,b)=>order[a.R.tier.key]-order[b.R.tier.key]).map(({p,R})=>{ const f=dom=>R.findings.find(x=>x.domain===dom); const g=f('Glucose'),b=f('Blood pressure'),l=f('Lipids'); return `<tr><td>${esc(p.name||'—')}</td><td>${p.age??'—'}</td><td style="color:${TC[R.tier.key]};font-weight:700">${d.tier[R.tier.key]}</td><td>${g?esc(g.value)+' · '+esc(d.stage[g.stage]||g.stage):'—'}</td><td>${b?esc(b.value)+' · '+esc(d.stage[b.stage]||b.stage):'—'}</td><td>${l?esc(l.value):'—'}</td><td>${pubProgs(R).join(' + ')||'—'}</td></tr>`; }).join('')}</table>`; }
+  else if(mode==='claims'&&pLast){ body+=payerHTML(pLast,true,st.demo).replace(/<div class="bar">.*?<\/div><div class="legend">.*?<\/div>/gs,''); }
+  const logo=(document.querySelector('.nav img')||{}).src||'';
+  const css=`@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+  :root{--navy:#313e72;--teal:#33c1b1;--teal-soft:#e6f7f5;--lav:#f6f6ff;--ink:#2a2a2a;--ink2:#363636;--body:#505454;--muted:#8a8f8f;--line:#e9e9ef;--bad:#d9534f;--bad-soft:#fde3e2}
+  *{box-sizing:border-box}body{font-family:'Plus Jakarta Sans',Arial,sans-serif;color:var(--body);margin:0;background:#fff;line-height:1.55;font-size:14px}
+  .page{max-width:820px;margin:0 auto;padding:0 28px 40px}
+  .head{display:flex;align-items:center;gap:18px;padding:26px 0 18px;border-bottom:3px solid var(--teal)}
+  .head img{width:78px;height:36px;display:block}.head .k{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);font-weight:700}
+  .head h1{font-size:26px;line-height:1.2;margin:2px 0 4px;color:var(--ink);font-weight:800}.head .sub{font-size:13px;color:var(--body)}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:13px;color:var(--body);padding:12px 0 6px}.meta b{color:var(--ink2);font-weight:600}
+  h2{font-size:19px;margin:30px 0 10px;color:var(--navy);font-weight:800;padding-left:12px;border-left:4px solid var(--teal)}
+  h3{font-size:15px;margin:20px 0 8px;color:var(--ink2);font-weight:700}
+  .band{color:#fff;padding:16px 18px;border-radius:16px;margin:12px 0 16px;font-size:14.5px;display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center}.band b{font-size:17px;display:block;margin-bottom:2px}.band .bigv{font-size:40px;font-weight:800;line-height:1;background:rgba(255,255,255,.18);border-radius:14px;padding:12px 14px;min-width:84px;text-align:center}.band .bigv small{font-size:16px;font-weight:600;opacity:.85}.band .cnt{margin-top:6px;font-size:13px;font-weight:700}
+  .mk .v{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.mk .x{font-size:11.5px;color:var(--body);margin-top:6px;line-height:1.45}.chip.ok{background:#dff3ea;color:#2a9d6f}.chip.warn{background:#fff3cf;color:#b88100}.chip.bad{background:#fde3e2;color:#d9534f}.chip.ok::before,.chip.warn::before,.chip.bad::before{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:currentColor;margin-right:6px;vertical-align:1px}
+  .rb{position:relative;height:18px;margin:8px 0 4px}.rbt{display:flex;height:6px;border-radius:3px;overflow:hidden;margin-top:6px}.rbt i{display:block;height:100%}.rb b{position:absolute;top:1px;width:16px;height:16px;margin-left:-8px;border-radius:50%;background:#fff;border:3px solid var(--navy);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+  table{border-collapse:collapse;width:100%;margin:8px 0 14px;font-size:13px}th,td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}th{background:var(--lav);color:var(--navy);font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;font-weight:700;border-bottom:0}tr:last-child td{border-bottom:0}
+  ul{padding-left:0;list-style:none;margin:6px 0}li{border:1px solid var(--line);border-radius:14px;padding:11px 14px;margin:0 0 8px;background:#fff}li b{color:var(--ink2);display:block;margin-bottom:2px}
+  .alert{border-left:4px solid var(--bad);background:var(--bad-soft);padding:10px 14px;border-radius:12px;color:var(--ink2)}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}.kpi{border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:#fff}.kpi .l{font-size:11.5px;color:var(--muted);font-weight:600}.kpi .v{font-size:22px;font-weight:800;color:var(--ink)}.kpi .s{font-size:11.5px}
+  .card{border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:12px}.card h3{margin-top:0}.markers{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}.mk{border:1px solid var(--line);border-radius:14px;padding:10px}.mk .l{font-size:11.5px;color:var(--muted);font-weight:600}.mk .v{font-size:20px;font-weight:800;color:var(--ink)}.mk .n{font-size:11.5px}
+  .chip{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--lav);color:var(--navy)}.note{font-size:13px}.center{text-align:left}.tablewrap{overflow-x:auto}
+  .cta{background:var(--lav);border-radius:18px;padding:20px 22px;margin:28px 0 0;display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center}.cta h2{margin:0 0 4px;border:0;padding:0;font-size:18px}.cta p{margin:0;font-size:13.5px}
+  .cta .btn{display:inline-block;background:var(--navy);color:#fff;font-weight:600;padding:12px 20px;border-radius:26px;text-decoration:none;font-size:14px;white-space:nowrap}
+  .foot{margin-top:26px;border-top:1px solid var(--line);padding-top:14px;font-size:12px;color:var(--muted);display:grid;grid-template-columns:1fr 1fr;gap:12px 24px}.foot b{display:block;color:var(--ink2);font-size:12.5px;margin-bottom:2px}.foot .disc{grid-column:1/-1;margin-top:4px}
+  @media (max-width:600px){.cta{grid-template-columns:1fr}.foot{grid-template-columns:1fr}.page{padding:0 16px 32px}}
+  @media print{.page{max-width:none;padding:0}.cta .btn{border:1px solid var(--navy)}}`;
+  const waLink='https://wa.me/6281112588833?text='+encodeURIComponent((d.rep.wamsg||'')+(name?' '+name:''));
+  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${d.rep.title} · Loop Health</title><style>${css}</style></head><body><div class="page"><div class="head">${logo?`<img src="${logo}" alt="Loop Health">`:'<b style="color:#33c1b1;font-size:26px">loop</b>'}<div><div class="k">Loop Health Indonesia</div><h1>${d.rep.title}</h1><div class="sub">${d.rep.sub}</div></div></div><div class="meta"><span><b>${d.rep.for}:</b> ${esc(name)}${co?' · '+esc(co):''}</span><span><b>${d.rep.date}:</b> ${date}</span></div>${body}<div class="cta"><div><h2>${d.rep.next}</h2><p>${d.rep.nextp}</p></div><a class="btn" href="${waLink}">${d.rep.cta}</a></div><div class="foot"><div><b>Loop Health Indonesia</b>PT Aplikasi Loop Health · GoWork Pacific Place, Lantai 1, Room 125, Jl. Jend. Sudirman Kav. 52-53, Jakarta Selatan 12190</div><div><b>${d.rep.contact}</b>hello@loophealth.id · WhatsApp +62 811 1258 8833 · loophealth.id</div><div class="disc">${d.rep.disc}</div></div></div></body></html>`; }
+function reportText(){ const tmp=document.createElement('div'); tmp.innerHTML=reportHTML().replace(/<style>.*?<\/style>/s,''); return tmp.textContent.replace(/\n{3,}/g,'\n\n').trim(); }
+$('leadForm').addEventListener('submit',async e=>{ e.preventDefault(); const d=T(); const ls=$('lstatus'); if(!$('lname').value.trim()||!$('lemail').value.trim()||!$('consent').checked){ ls.textContent=d['lead.need']; ls.classList.add('err'); return; } ls.classList.remove('err');
+  const html=reportHTML(); const fname=`Loop-MCU-Report-${new Date().toISOString().slice(0,10)}.html`; ls.textContent=d['lead.sent'];
+  const rv=$('reportView'); rv.hidden=false; rv.innerHTML=`<div class="actions" style="justify-content:center;margin:16px 0 0"><button type="button" class="btn secondary sm" id="repSave">${d['lead.save']}</button><button type="button" class="btn secondary sm" id="repCopy">${d['lead.copy']}</button></div><div class="reportview"><iframe id="repFrame" title="report"></iframe></div>`;
+  const fr=$('repFrame'); fr.srcdoc=html;
+  $('repCopy').addEventListener('click',()=>{ const t=reportText(); const done=()=>{ ls.textContent=d['lead.copied']; }; if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done).catch(()=>{}); });
+  $('repSave').addEventListener('click',async()=>{ const dl=await downloadsP; if(!dl){ try{ const u=URL.createObjectURL(new Blob([html],{type:'text/html'})); const a=document.createElement('a'); a.href=u; a.download=fname; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),2000); ls.textContent=d['lead.saved']; }catch(e){ ls.textContent=d['lead.inline']; } return; } try{ await dl.save({filename:fname,data:html}); ls.textContent=d['lead.saved']; }catch(err){ if(err&&err.code!=='declined') ls.textContent=d['lead.inline']; } });
+  rv.scrollIntoView({behavior:'smooth',block:'start'}); });
+$('waBtn').addEventListener('click',e=>{ if(!$('consent').checked){ e.preventDefault(); $('consent').focus(); const c=$('consent').parentElement; c.style.color='var(--bad)'; setTimeout(()=>c.style.color='',1500); } });
+
+function exampleState(){ if(PAGE==='corporate'){ const rows=parseCSV(sampleMCU()); const hdr=rows[0]; const low=hdr.map(h=>h.toLowerCase()); const map={}; Object.keys(MCU_SYN).forEach(k=>map[k]=low.findIndex(h=>MCU_SYN[k].test(h))); const list=rows.slice(1).map(r=>{ const p=rowToPatientSheet(hdr,r,map); return {p,R:analyze(p)}; }); return {mode:'multi',multiLast:list,name:lang==='id'?'Ibu HR · PT Contoh':'HR Lead · PT Example',co:'PT Contoh',demo:true}; }
+  if(PAGE==='insurer'){ const rows=parseCSV(sampleClaims()); const P=segmentRows(rows.slice(1),{member:0,age:1,icd:2,amount:3,date:4},false); return {mode:'claims',pLast:P,name:lang==='id'?'Tim Aktuaria · Asuransi Contoh':'Actuarial Team · Example Insurer',co:lang==='id'?'Asuransi Contoh':'Example Insurer',demo:true}; }
+  const p=Object.assign({},DEMO1); return {mode:'single',lastP:p,lastR:analyze(p),name:'Budi Santoso',co:'',demo:true}; }
+function renderExample(){ try{ $('exampleFrame').srcdoc=reportHTML(exampleState()); }catch(e){ console.warn(e); } }
+const _applyLang=applyLang; applyLang=function(){ _applyLang(); renderExample(); };
+applyLang();
+samplerP.then(s=>{ if(!s) setStatus(T().st.noclaude); });
+</script>
+</body></html>
