@@ -50,7 +50,7 @@ and are kept for reference. Photos and logos in `img/` come from loophealth.id's
 
 Eligibility Criteria v3 → Deltamas Clinical Protocol 2.2 → Clinical Reference Jun 2026 →
 NCD Guidelines SOP v1 → MCU Scanner May 2026. Public pages show only the three programs Loop
-sells (DMP, DPP, HMP incl. cholesterol); the internal analyzer still shows the full v3 grid.
+sells (DMP, DPP, HMP). There is no cholesterol program; the internal analyzer still shows the full v3 grid.
 
 The result is not a diagnosis. Thresholds must be signed off by dr. William before anything goes live
 (see the proof pack, item 2).
