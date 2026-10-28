@@ -1,0 +1,756 @@
+<!doctype html><html lang="id"><head><meta name="robots" content="noindex,nofollow"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Loop MCU Analyzer</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: a clinic worksheet. Left = MCU entry sheet, right = scanner output. Cohort mode = batch table under a summary strip. */
+:root{
+  --bg:#fbf7f2; --paper:#ffffff; --ink:#1a2238; --ink-2:#44506e; --muted:#7a829c; --rule:rgba(26,34,56,.12);
+  --teal:#2aa49e; --teal-soft:#d8f0ef; --navy:#5468a1; --navy-soft:#e3e7f2; --pink:#f59698;
+  --t-green:#2a9d6f; --t-green-soft:#d4ede0; --t-lime:#7cb342; --t-lime-soft:#e5f1d4; --t-yellow:#d9a400; --t-yellow-soft:#fbf0c6;
+  --t-amber:#e07a1f; --t-amber-soft:#fbe3cc; --t-red:#c43d3d; --t-red-soft:#f8dcdc;
+  --display:'Plus Jakarta Sans',system-ui,sans-serif; --body:'Plus Jakarta Sans',system-ui,sans-serif; --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12161f; --paper:#1a1f2b; --ink:#eef0f5; --ink-2:#c3c8d6; --muted:#8c93a8; --rule:rgba(238,240,245,.14);
+  --teal:#4fc9c2; --teal-soft:#173a39; --navy:#8fa0d8; --navy-soft:#262d45; --pink:#f59698;
+  --t-green:#4cc08f; --t-green-soft:#173327; --t-lime:#9ccc65; --t-lime-soft:#28361a; --t-yellow:#e6b800; --t-yellow-soft:#3a3210;
+  --t-amber:#f0924a; --t-amber-soft:#3d2614; --t-red:#e46a6a; --t-red-soft:#3f1d1d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12161f; --paper:#1a1f2b; --ink:#eef0f5; --ink-2:#c3c8d6; --muted:#8c93a8; --rule:rgba(238,240,245,.14);
+  --teal:#4fc9c2; --teal-soft:#173a39; --navy:#8fa0d8; --navy-soft:#262d45; --pink:#f59698;
+  --t-green:#4cc08f; --t-green-soft:#173327; --t-lime:#9ccc65; --t-lime-soft:#28361a; --t-yellow:#e6b800; --t-yellow-soft:#3a3210;
+  --t-amber:#f0924a; --t-amber-soft:#3d2614; --t-red:#e46a6a; --t-red-soft:#3f1d1d; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.5;padding-inline:16px;padding-block:0 48px;margin:0}
+.wrap{max-width:1280px;margin:0 auto}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;padding-block:22px 14px;border-bottom:1px solid var(--rule)}
+.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:11px;color:var(--teal);font-weight:700}
+h1{font-family:var(--display);font-weight:800;font-size:26px;line-height:1.15;margin:4px 0 2px;text-wrap:balance}
+.sub{color:var(--ink-2);font-size:13px;max-width:70ch}
+nav.tabs{display:flex;gap:4px;flex-wrap:wrap}
+nav.tabs button{font:inherit;font-weight:600;padding:8px 14px;border-radius:8px;border:1px solid var(--rule);background:var(--paper);color:var(--ink-2);cursor:pointer}
+nav.tabs button[aria-selected="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+nav.tabs button:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.panel{padding-block:18px}
+.grid{display:grid;grid-template-columns:minmax(0,440px) minmax(0,1fr);gap:20px}
+@media (max-width:900px){.grid{grid-template-columns:1fr}}
+.sheet{background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:14px 16px;min-width:0}
+.sheet h2{font-family:var(--display);font-size:15px;font-weight:700;margin:0 0 8px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.sheet h2 small{font-weight:500;color:var(--muted);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+fieldset{border:0;padding:0;margin:0 0 10px}
+fieldset legend{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;padding:0;margin:8px 0 6px}
+.row{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px}
+.f{display:flex;flex-direction:column;gap:3px;min-width:0}
+.f label{font-size:11.5px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.f input,.f select{font:inherit;font-family:var(--mono);font-size:13px;padding:6px 8px;border:1px solid var(--rule);border-radius:6px;background:var(--bg);color:var(--ink);width:100%;min-width:0}
+.f select{font-family:var(--body)}
+.chk{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px 10px}
+.chk label{display:flex;gap:6px;align-items:flex-start;font-size:12.5px;color:var(--ink-2);cursor:pointer}
+.chk input{margin-top:3px;accent-color:var(--teal)}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 4px}
+button.primary{font:inherit;font-weight:700;padding:9px 16px;border-radius:8px;border:0;background:var(--teal);color:#fff;cursor:pointer}
+button.ghost{font:inherit;font-weight:600;padding:8px 12px;border-radius:8px;border:1px solid var(--rule);background:transparent;color:var(--ink-2);cursor:pointer}
+button.ghost.small{padding:5px 10px;font-size:12px}
+.samples{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.samples button{font:inherit;font-size:12px;padding:5px 10px;border-radius:999px;border:1px solid var(--rule);background:var(--bg);color:var(--ink-2);cursor:pointer}
+.samples button:hover{border-color:var(--teal);color:var(--teal)}
+/* output */
+.out{display:flex;flex-direction:column;gap:14px;min-width:0}
+.tierband{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;padding:14px 16px;border-radius:10px;border:1px solid var(--rule);background:var(--paper)}
+.tierdot{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-family:var(--display);font-size:13px;text-transform:uppercase;letter-spacing:.04em}
+.tierband h3{margin:0;font-family:var(--display);font-size:18px;font-weight:800}
+.tierband p{margin:2px 0 0;color:var(--ink-2);font-size:13px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.kpi{background:var(--paper);border:1px solid var(--rule);border-radius:8px;padding:8px 10px;min-width:0}
+.kpi .l{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.kpi .v{font-family:var(--mono);font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
+.kpi .s{font-size:11px;color:var(--ink-2)}
+.block{background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:12px 14px;min-width:0}
+.block h3{margin:0 0 8px;font-family:var(--display);font-size:14px;font-weight:800;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.block h3 .src{font-weight:500;font-size:11px;color:var(--muted)}
+.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.list li{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;padding:7px 10px;border-radius:7px;border-left:4px solid var(--rule);background:var(--bg);font-size:13px}
+.list li .tag{font-family:var(--mono);font-size:11px;font-weight:600;padding:2px 6px;border-radius:4px;white-space:nowrap;margin-top:1px}
+.list li .why{color:var(--ink-2);font-size:12px}
+.list li .act{display:block;margin-top:2px;font-weight:600}
+.list li.red{border-left-color:var(--t-red)} .list li.red .tag{background:var(--t-red-soft);color:var(--t-red)}
+.list li.amber{border-left-color:var(--t-amber)} .list li.amber .tag{background:var(--t-amber-soft);color:var(--t-amber)}
+.list li.yellow{border-left-color:var(--t-yellow)} .list li.yellow .tag{background:var(--t-yellow-soft);color:var(--t-yellow)}
+.list li.lime{border-left-color:var(--t-lime)} .list li.lime .tag{background:var(--t-lime-soft);color:var(--t-lime)}
+.list li.green{border-left-color:var(--t-green)} .list li.green .tag{background:var(--t-green-soft);color:var(--t-green)}
+.list li.navy{border-left-color:var(--navy)} .list li.navy .tag{background:var(--navy-soft);color:var(--navy)}
+.list li.teal{border-left-color:var(--teal)} .list li.teal .tag{background:var(--teal-soft);color:var(--teal)}
+.list li.off{opacity:.55}
+.progs{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.prog{border:1px solid var(--rule);border-radius:8px;padding:9px 10px;background:var(--bg);min-width:0}
+.prog .code{font-family:var(--mono);font-weight:600;font-size:12px}
+.prog .name{font-weight:700;font-size:13px;margin:1px 0}
+.prog .st{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:999px;margin:3px 0}
+.prog.yes{border-color:var(--teal);background:var(--teal-soft)} .prog.yes .st{background:var(--teal);color:#fff}
+.prog.cand{border-color:var(--t-yellow)} .prog.cand .st{background:var(--t-yellow-soft);color:var(--t-yellow)}
+.prog.no .st{background:var(--rule);color:var(--muted)} .prog.no{opacity:.6}
+.prog.excl{border-color:var(--t-red)} .prog.excl .st{background:var(--t-red-soft);color:var(--t-red)}
+.prog ul{margin:4px 0 0;padding-left:16px;font-size:12px;color:var(--ink-2)}
+.proto{display:flex;flex-direction:column;gap:8px}
+.proto .card{border:1px solid var(--rule);border-radius:8px;padding:9px 11px;background:var(--bg)}
+.proto .card h4{margin:0 0 4px;font-size:13px;font-family:var(--display)}
+.proto dl{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:0;font-size:12.5px}
+.proto dt{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;padding-top:2px}
+.proto dd{margin:0}
+.confirm{font-size:12px;color:var(--t-amber);font-weight:600}
+.report{font-size:13.5px;line-height:1.55;border:1px solid var(--rule);border-radius:8px;padding:12px 14px;background:var(--bg);white-space:pre-wrap;font-family:var(--body)}
+.stages{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.stage{padding:7px 9px;border-radius:7px;border:1px solid var(--rule);background:var(--bg);min-width:0}
+.stage .l{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+.stage .v{font-family:var(--mono);font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.stage .n{font-size:11.5px;font-weight:600}
+.stage.green{border-left:4px solid var(--t-green)} .stage.yellow{border-left:4px solid var(--t-yellow)} .stage.amber{border-left:4px solid var(--t-amber)} .stage.red{border-left:4px solid var(--t-red)} .stage.na{opacity:.5}
+/* cohort */
+.cohort-top{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+textarea{font:inherit;font-family:var(--mono);font-size:12px;width:100%;min-height:120px;border:1px solid var(--rule);border-radius:8px;padding:8px;background:var(--bg);color:var(--ink)}
+.bar{display:flex;height:26px;border-radius:6px;overflow:hidden;border:1px solid var(--rule)}
+.bar div{display:grid;place-items:center;color:#fff;font-size:11px;font-weight:700;font-family:var(--mono);min-width:0;overflow:hidden}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--ink-2);margin-top:6px}
+.legend span i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.tablewrap{overflow-x:auto;border:1px solid var(--rule);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:12.5px;min-width:900px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--rule);text-align:left;vertical-align:top}
+th{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--bg);position:sticky;top:0}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.pill{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:999px;color:#fff;letter-spacing:.04em}
+.drivers{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.driver{border:1px solid var(--rule);border-radius:8px;padding:8px 10px;background:var(--bg)}
+.driver .v{font-family:var(--mono);font-weight:600;font-size:16px}
+.driver .l{font-size:12px;color:var(--ink-2)}
+.driver .track{height:5px;border-radius:3px;background:var(--rule);margin-top:5px;overflow:hidden}.driver .track i{display:block;height:100%;background:var(--navy)}
+.rules table{min-width:760px}
+.note{font-size:12px;color:var(--muted);margin:6px 0 0}
+.toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+.upload{border:1.5px dashed var(--teal);border-radius:8px;padding:10px 12px;margin-bottom:10px;background:var(--teal-soft);display:flex;flex-direction:column;gap:6px}
+.upload.drag{background:var(--navy-soft);border-color:var(--navy)}
+.upload .up-text{font-size:12.5px;color:var(--ink-2)}
+.upload .up-status{font-size:12px;font-family:var(--mono);color:var(--navy);min-height:1.2em;white-space:pre-wrap}
+.upload .up-status.err{color:var(--t-red)}
+.foot{margin-top:28px;font-size:12px;color:var(--muted);border-top:1px solid var(--rule);padding-top:12px}
+.foot a{color:var(--teal)}
+</style></head><body><div style="position:sticky;top:0;z-index:9999;background:#7c3aed;color:#fff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:7px 12px">STAGING · belum live · <a href="https://stevetsurface.github.io/loop-site/" style="color:#fff;text-decoration:underline">lihat situs live →</a></div>
+<div class="wrap">
+<header class="top">
+  <div>
+    <div class="eyebrow">Loop Health Indonesia · Klinik Pratama · A13 scanner rule set</div>
+    <h1>Loop MCU Analyzer</h1>
+    <div class="sub">Enter one member's medical check-up (MCU) results or paste an employer cohort. The engine applies the v3 six-program eligibility grid, dr. William's Deltamas clinical protocol v2.2, the Tier 4 refer-out list and the 5-tier wellness classification, and drafts the Bahasa member report.</div>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="single" id="tab-single">Member</button>
+    <button role="tab" aria-selected="false" data-tab="cohort" id="tab-cohort">Cohort (CSV)</button>
+    <button role="tab" aria-selected="false" data-tab="rules" id="tab-rules">Rule book</button>
+  </nav>
+</header>
+
+<!-- ============ SINGLE MEMBER ============ -->
+<section class="panel" id="panel-single">
+<div class="grid">
+<div class="sheet">
+  <h2>MCU entry sheet <small>leave blank if not tested</small></h2>
+  <div class="upload" id="uploadBox">
+    <input type="file" id="mcufile" accept=".pdf,.jpg,.jpeg,.png,.webp,.xlsx,.xls,.csv,image/*,application/pdf" multiple style="font:inherit;font-size:12px;min-width:0">
+    <div class="up-text"><strong>Upload the MCU report</strong> · lab PDF (Prodia, Kimia Farma, hospital), a photo of the printout, or an Excel/CSV export. Values are read into the sheet below for you to check, then analysed. Several photos of one report can be selected together.</div>
+    <div class="up-status" id="upStatus" aria-live="polite"></div>
+  </div>
+  <div class="samples" id="samples"></div>
+  <form id="f" autocomplete="off">
+  <fieldset><legend>Member</legend>
+    <div class="row">
+      <div class="f"><label for="name">Name / ID</label><input id="name" type="text"></div>
+      <div class="f"><label for="age">Age (yr)</label><input id="age" type="number" min="0" max="110"></div>
+      <div class="f"><label for="sex">Sex</label><select id="sex"><option value="M">Male</option><option value="F">Female</option></select></div>
+      <div class="f"><label for="height">Height (cm)</label><input id="height" type="number" step="0.1"></div>
+      <div class="f"><label for="weight">Weight (kg)</label><input id="weight" type="number" step="0.1"></div>
+      <div class="f"><label for="waist">Waist (cm)</label><input id="waist" type="number" step="0.1"></div>
+      <div class="f"><label for="smoker">Smoking</label><select id="smoker"><option value="never">Never</option><option value="former">Former</option><option value="current">Current</option></select></div>
+      <div class="f"><label for="alcohol">Alcohol (g/day)</label><input id="alcohol" type="number" step="1" placeholder="0"></div>
+    </div>
+  </fieldset>
+  <fieldset><legend>Blood pressure · to protocol (seated 10 min, nurse attending)</legend>
+    <div class="row">
+      <div class="f"><label for="sbp">Office SBP</label><input id="sbp" type="number"></div>
+      <div class="f"><label for="dbp">Office DBP</label><input id="dbp" type="number"></div>
+      <div class="f"><label for="hsbp">Home avg SBP</label><input id="hsbp" type="number"></div>
+      <div class="f"><label for="hdbp">Home avg DBP</label><input id="hdbp" type="number"></div>
+      <div class="f"><label for="hr">Heart rate</label><input id="hr" type="number"></div>
+    </div>
+    <div class="chk" style="margin-top:6px">
+      <label><input type="checkbox" id="bpconf"> BP confirmed on 2nd occasion</label>
+      <label><input type="checkbox" id="bpsym"> Headache · vision · chest pain · neuro symptoms</label>
+    </div>
+  </fieldset>
+  <fieldset><legend>Glucose</legend>
+    <div class="row">
+      <div class="f"><label for="hba1c">HbA1c (%)</label><input id="hba1c" type="number" step="0.1"></div>
+      <div class="f"><label for="fpg">Fasting glucose</label><input id="fpg" type="number"></div>
+      <div class="f"><label for="ogtt">OGTT 2-h / 2hPP</label><input id="ogtt" type="number"></div>
+      <div class="f"><label for="rbg">Random glucose</label><input id="rbg" type="number"></div>
+    </div>
+    <div class="chk" style="margin-top:6px"><label><input type="checkbox" id="dmsym"> Polyuria · polydipsia · weight loss symptoms</label></div>
+  </fieldset>
+  <fieldset><legend>Lipids (mg/dL)</legend>
+    <div class="row">
+      <div class="f"><label for="tc">Total chol</label><input id="tc" type="number"></div>
+      <div class="f"><label for="ldl">LDL</label><input id="ldl" type="number"></div>
+      <div class="f"><label for="hdl">HDL</label><input id="hdl" type="number"></div>
+      <div class="f"><label for="tg">Triglycerides</label><input id="tg" type="number"></div>
+    </div>
+  </fieldset>
+  <fieldset><legend>Kidney · liver · other chemistry</legend>
+    <div class="row">
+      <div class="f"><label for="creat">Creatinine (mg/dL)</label><input id="creat" type="number" step="0.01"></div>
+      <div class="f"><label for="uacr">Urine ACR (mg/g)</label><input id="uacr" type="number"></div>
+      <div class="f"><label for="uprot">Dipstick protein</label><select id="uprot"><option value="">—</option><option value="neg">Negative</option><option value="trace">Trace</option><option value="pos">1+ or more</option></select></div>
+      <div class="f"><label for="alt">ALT / SGPT (U/L)</label><input id="alt" type="number"></div>
+      <div class="f"><label for="ast">AST / SGOT (U/L)</label><input id="ast" type="number"></div>
+      <div class="f"><label for="plt">Platelets (×10⁹/L)</label><input id="plt" type="number"></div>
+      <div class="f"><label for="ua">Uric acid (mg/dL)</label><input id="ua" type="number" step="0.1"></div>
+      <div class="f"><label for="tsh">TSH (mIU/L)</label><input id="tsh" type="number" step="0.01"></div>
+      <div class="f"><label for="k">Potassium (mmol/L)</label><input id="k" type="number" step="0.1"></div>
+      <div class="f"><label for="hb">Hb (g/dL)</label><input id="hb" type="number" step="0.1"></div>
+      <div class="f"><label for="wbc">WBC (×10⁹/L)</label><input id="wbc" type="number" step="0.1"></div>
+    </div>
+    <div class="chk" style="margin-top:6px">
+      <label><input type="checkbox" id="hbsag"> HBsAg positive</label>
+      <label><input type="checkbox" id="hcv"> Anti-HCV positive</label>
+      <label><input type="checkbox" id="tpo"> TPO antibody positive</label>
+      <label><input type="checkbox" id="thysym"> Hypothyroid symptoms</label>
+    </div>
+  </fieldset>
+  <fieldset><legend>Imaging · ECG · spirometry</legend>
+    <div class="row">
+      <div class="f"><label for="ecg">12-lead ECG</label><select id="ecg"><option value="">Not done</option><option value="normal">Normal</option><option value="lvh">LVH</option><option value="af">Atrial fibrillation</option><option value="mi">Q waves / prior MI</option><option value="isch">ST-T ischaemic change</option><option value="other">Other abnormality</option></select></div>
+      <div class="f"><label for="cxr">Chest X-ray</label><select id="cxr"><option value="">Not done</option><option value="normal">Normal</option><option value="mass">Mass / nodule</option><option value="cardio">Cardiomegaly</option><option value="other">Other</option></select></div>
+      <div class="f"><label for="usg">Liver ultrasound</label><select id="usg"><option value="">Not done</option><option value="normal">Normal</option><option value="steatosis">Fatty liver</option></select></div>
+      <div class="f"><label for="fev">FEV1/FVC (post-BD)</label><input id="fev" type="number" step="0.01" placeholder="0.70"></div>
+      <div class="f"><label for="rev">BD reversibility (%)</label><input id="rev" type="number"></div>
+      <div class="f"><label for="goiter">Thyroid palpation</label><select id="goiter"><option value="">—</option><option value="normal">Normal</option><option value="goiter">Enlarged / goiter</option><option value="nodule">Nodule</option></select></div>
+    </div>
+  </fieldset>
+  <fieldset><legend>Questionnaires</legend>
+    <div class="row">
+      <div class="f"><label for="phq">PHQ-9 total (0–27)</label><input id="phq" type="number" min="0" max="27"></div>
+      <div class="f"><label for="gad">GAD-7 total (0–21)</label><input id="gad" type="number" min="0" max="21"></div>
+      <div class="f"><label for="stopbang">STOP-BANG (0–8)</label><input id="stopbang" type="number" min="0" max="8"></div>
+      <div class="f"><label for="motiv">Quit motivation (0–10)</label><input id="motiv" type="number" min="0" max="10"></div>
+    </div>
+    <div class="chk" style="margin-top:6px">
+      <label><input type="checkbox" id="phq9"> PHQ-9 item 9 positive (self-harm thoughts)</label>
+      <label><input type="checkbox" id="siplan"> Suicidal ideation with plan or intent</label>
+    </div>
+  </fieldset>
+  <fieldset><legend>History · existing diagnoses on file</legend>
+    <div class="chk" id="dxbox"></div>
+  </fieldset>
+  <fieldset><legend>Current medication (ATC class)</legend>
+    <div class="chk" id="medbox"></div>
+  </fieldset>
+  <fieldset><legend>Exclusion screen</legend>
+    <div class="chk" id="exbox"></div>
+  </fieldset>
+  <div class="btns">
+    <button type="submit" class="primary">Analyze MCU</button>
+    <button type="button" class="ghost" id="clear">Clear sheet</button>
+    <button type="button" class="ghost" id="copyjson">Copy as JSON</button>
+  </div>
+  </form>
+</div>
+<div class="out" id="out"></div>
+</div>
+</section>
+
+<!-- ============ COHORT ============ -->
+<section class="panel" id="panel-cohort" hidden>
+<div class="cohort-top">
+  <div class="sheet">
+    <h2>Employer cohort · paste or upload MCU CSV <small>one row per member</small></h2>
+    <p class="note" style="margin:0 0 8px">Header row required. Recognised columns (any order, case-insensitive): <code id="colspec"></code>. Semicolon-separate multiple <code>dx</code> / <code>meds</code> tokens. Unknown columns are ignored.</p>
+    <textarea id="csv" aria-label="CSV input"></textarea>
+    <div class="btns">
+      <button type="button" class="primary" id="runCohort">Analyze cohort</button>
+      <input type="file" id="csvfile" accept=".csv,text/csv" style="font:inherit;font-size:12px">
+      <button type="button" class="ghost" id="sampleCohort">Load example cohort (80 synthetic rows)</button>
+      <button type="button" class="ghost" id="copyResults">Copy results CSV</button>
+    </div>
+  </div>
+  <div id="cohortOut" class="out"></div>
+</div>
+</section>
+
+<!-- ============ RULES ============ -->
+<section class="panel rules" id="panel-rules" hidden>
+  <div class="out" id="rulesOut"></div>
+</section>
+
+<div class="foot">Rule thresholds are transcribed from: Loop Program Eligibility Criteria v3 (2026-06-10, six-program grid) · Loop Deltamas Clinical Protocol draft 2.2 (7 Sep 2026, dr. William's marked-up review) · Loop Clinical Reference (Jun 2026) · ICD-10 Scope &amp; Screening Protocols (Jun 2026) · NCD Clinical Guidelines SOP v1 (stage ladders) · MCU Eligibility + Scanner (May 2026, 5-tier classification) · Blood + POC Frequency Matrix. Decision support only. Every enrolment, exclusion and referral is confirmed by the Loop GP; dr. William (penanggung jawab) signs off thresholds before clinical use. Items marked <span class="confirm">TO CONFIRM</span> are still open in protocol 2.2.</div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+/* ======================= REFERENCE DATA ======================= */
+const DX=[
+ ['dm','Diabetes (E10–E14) diagnosed'],['t1','Type 1 DM / insulin-pump'],['predm','Prediabetes / GDM history'],['htn','Hypertension (I10) diagnosed'],
+ ['dyslip','Dyslipidaemia (E78) diagnosed'],['ihd','Stable IHD (I25) · cardiologist clearance'],['mi90','MI / stroke / PCI / CABG within 90 days'],
+ ['cvevent','Prior MI / stroke (>90 days, cleared)'],['hf12','Heart failure NYHA I–II'],['hf34','Heart failure NYHA III–IV'],['af','AF · stable, rate-controlled'],
+ ['afnew','AF · new-onset / unstable'],['ckd','CKD on file'],['nafld','NAFLD on file'],['hypothy','Hypothyroidism on file'],['copd','COPD diagnosed (spirometry)'],
+ ['asthma','Asthma diagnosed'],['mdd','Depression on file'],['anx','Anxiety on file'],['cancer','Active cancer treatment'],['bipolar','Bipolar / psychosis'],
+ ['gout','Gout ≥2 attacks/yr or tophi']
+];
+const MEDS=[
+ ['insulin','A10A insulin'],['oad','A10B oral antidiabetic (metformin, SU, DPP-4)'],['glp','GLP-1 / SGLT2 (external Rx)'],['antihtn','C02/03/07/08/09 antihypertensive'],
+ ['statin','C10 statin / lipid-lowering'],['anticoag','B01 warfarin / DOAC'],['levo','H03 levothyroxine'],['inhaler','R03 ICS / LABA / LAMA'],['ssri','N06 SSRI / SNRI'],['steroid','High-dose glucocorticoid']
+];
+const EXCL=[
+ ['preg','Pregnant or <4 weeks postpartum'],['ed','Eating disorder <12 months'],['tx','Organ transplant <6 months'],['bari','Bariatric surgery <6 months'],
+ ['dialysis','On dialysis'],['dka','DKA or severe hypoglycaemia <30 days'],['panc','Acute pancreatitis'],['sud','Substance-use disorder (with anxiety)']
+];
+const TIERS={
+ red:{n:'Red · Critical',c:'var(--t-red)',s:'var(--t-red-soft)',a:'Same-day GP contact · urgent referral where flagged · monthly visits once enrolled'},
+ amber:{n:'Amber · Very high',c:'var(--t-amber)',s:'var(--t-amber-soft)',a:'Enrol in every qualifying program · monthly visits until target · GP owns case'},
+ yellow:{n:'Yellow · High',c:'var(--t-yellow)',s:'var(--t-yellow-soft)',a:'Enrol in qualifying program · quarterly cadence · dedicated GP'},
+ lime:{n:'Lime · Moderate',c:'var(--t-lime)',s:'var(--t-lime-soft)',a:'Prevention arm (DPP) · lifestyle-first · 3 doctor visits in year one'},
+ green:{n:'Green · Low',c:'var(--t-green)',s:'var(--t-green-soft)',a:'Annual MCU · preventive scope · app wellness content'}
+};
+const PROGRAMS=[
+ {code:'DPP',name:'Diabetes Prevention Program',tier:'Tier 1',icd:'R73 · E66'},
+ {code:'DMP',name:'Diabetes Management Program',tier:'Tier 1',icd:'E11'},
+ {code:'HMP',name:'Hypertension Management Program',tier:'Tier 1',icd:'I10'},
+ {code:'CMP',name:'Cardiometabolic Management Program',tier:'Tier 2',icd:'I11 · I12 · I25 · I48 · I50 · E78'},
+ {code:'LKMP',name:'Liver + Kidney + Thyroid Management',tier:'Tier 2',icd:'K76.0 · N18.1–3 · E03/E04'},
+ {code:'WMP',name:'Wellness Management Program',tier:'Tier 2',icd:'J44 · J45 · F32/F33 · F41'}
+];
+const SRC={elig:'Eligibility v3',proto:'Protocol 2.2 (dr. William)',ref:'Clinical Reference Jun26',scan:'MCU Scanner May26',ncd:'NCD Guidelines SOP',icd:'ICD-10 Scope Jun26',blood:'Blood Frequency Matrix'};
+
+/* ======================= HELPERS ======================= */
+const num=v=>(v===''||v===null||v===undefined||isNaN(+v))?null:+v;
+const r1=v=>Math.round(v*10)/10;
+function egfr(scr,age,sex){ if(scr==null||age==null) return null; const f=sex==='F'; const k=f?0.7:0.9, a=f?-0.241:-0.302; const r=scr/k; const v=142*Math.pow(Math.min(r,1),a)*Math.pow(Math.max(r,1),-1.2)*Math.pow(0.9938,age)*(f?1.012:1); return Math.round(v); }
+function fib4(age,ast,alt,plt){ if(age==null||ast==null||alt==null||plt==null||alt<=0||plt<=0) return null; return Math.round((age*ast)/(plt*Math.sqrt(alt))*100)/100; }
+function ascvd(p){ // Pooled Cohort Equations (2013), non-Hispanic white coefficients. Not calibrated for Indonesia: indicative only.
+  const {age,sex,tc,hdl,sbp,onHtn,smoker,dm}=p; if(age==null||tc==null||hdl==null||sbp==null||age<40||age>79) return null;
+  const la=Math.log(age),ltc=Math.log(tc),lh=Math.log(hdl),ls=Math.log(sbp); let s,base,mean;
+  if(sex==='F'){ s=-29.799*la+4.884*la*la+13.540*ltc-3.114*la*ltc-13.578*lh+3.149*la*lh+(onHtn?2.019:1.957)*ls+(smoker?7.574-1.665*la:0)+(dm?0.661:0); base=0.9665; mean=-29.18; }
+  else { s=12.344*la+11.853*ltc-2.664*la*ltc-7.990*lh+1.769*la*lh+(onHtn?1.797:1.764)*ls+(smoker?7.837-1.795*la:0)+(dm?0.658:0); base=0.9144; mean=61.18; }
+  return Math.round((1-Math.pow(base,Math.exp(s-mean)))*1000)/10;
+}
+function bmiCat(b){ if(b==null) return null; if(b<18.5) return ['Underweight','yellow']; if(b<23) return ['Normal (18.5–22.9)','green']; if(b<25) return ['Overweight (23–24.9 · Asian)','yellow']; if(b<30) return ['Obese I (25–29.9 · Asian)','amber']; if(b<35) return ['Obese II (30–34.9)','amber']; return ['Severe obesity (≥35)','red']; }
+
+/* ======================= ENGINE ======================= */
+function analyze(p){
+  const R={flags:[],findings:[],programs:{},exclusions:[],referrals:[],protocol:[],patient:[],derived:{},drivers:[]};
+  const has=k=>!!p.dx[k], med=k=>!!p.meds[k], ex=k=>!!p.excl[k];
+  const F=p.sex==='F';
+  // ---- derived
+  const bmi=(p.height&&p.weight)?r1(p.weight/Math.pow(p.height/100,2)):null; R.derived.bmi=bmi; R.derived.bmiCat=bmiCat(bmi);
+  const eg=egfr(p.creat,p.age,p.sex); R.derived.egfr=eg;
+  const fb=fib4(p.age,p.ast,p.alt,p.plt); R.derived.fib4=fb;
+  const nonhdl=(p.tc!=null&&p.hdl!=null)?p.tc-p.hdl:null; R.derived.nonhdl=nonhdl;
+  const sbp=p.sbp,dbp=p.dbp;
+  const waistHigh=p.waist!=null&&(F?p.waist>=80:p.waist>=90);
+  const anyDM=has('dm')||has('t1')||med('insulin')||med('oad')||med('glp');
+  const glyDM=(p.hba1c!=null&&p.hba1c>=6.5)||(p.fpg!=null&&p.fpg>=126)||(p.ogtt!=null&&p.ogtt>=200)||(p.rbg!=null&&p.rbg>=200&&p.dmsym);
+  const isDM=anyDM||glyDM;
+  const preDM=!isDM&&((p.hba1c!=null&&p.hba1c>=5.7&&p.hba1c<6.5)||(p.fpg!=null&&p.fpg>=100&&p.fpg<126)||(p.ogtt!=null&&p.ogtt>=140&&p.ogtt<200));
+  const bpHigh=sbp!=null&&dbp!=null&&(sbp>=140||dbp>=90);
+  const homeHigh=p.hsbp!=null&&p.hdbp!=null&&(p.hsbp>=135||p.hdbp>=85);
+  const htnDx=has('htn')||med('antihtn');
+  const htnConfirmed=htnDx||homeHigh||(bpHigh&&p.bpconf);
+  const htnCandidate=!htnConfirmed&&bpHigh;
+  const bpElevated=!bpHigh&&sbp!=null&&dbp!=null&&((sbp>=130&&sbp<140)||(dbp>=85&&dbp<90));
+  const dyslipLab=(p.ldl!=null&&p.ldl>130)||(p.hdl!=null&&(F?p.hdl<50:p.hdl<40))||(p.tg!=null&&p.tg>=150)||(p.tc!=null&&p.tc>200)||(nonhdl!=null&&nonhdl>160);
+  const dyslip=dyslipLab||has('dyslip')||med('statin');
+  const altHigh=p.alt!=null&&p.alt>40, astHigh=p.ast!=null&&p.ast>40;
+  const alcoholOK=p.alcohol==null||(F?p.alcohol<20:p.alcohol<30);
+  const nafld=(has('nafld')||((altHigh||astHigh)&&p.usg==='steatosis'))&&alcoholOK;
+  const ckdStage=eg==null?null:(eg>=90?1:eg>=60?2:eg>=45?'3a':eg>=30?'3b':eg>=15?4:5);
+  const albumin=(p.uacr!=null&&p.uacr>=30)||p.uprot==='pos';
+  const ckd13=(eg!=null&&eg>=30&&eg<90&&albumin)||(eg!=null&&eg>=30&&eg<60)||(has('ckd')&&(eg==null||eg>=30));
+  const hypo=(p.tsh!=null&&(p.tsh>=10||(p.tsh>=4.5&&p.tsh<10&&(p.thysym||p.tpo))))||has('hypothy')||med('levo');
+  const copd=has('copd')||(p.fev!=null&&p.fev<0.7);
+  const asthma=has('asthma')||(p.rev!=null&&p.rev>=12&&!(p.fev!=null&&p.fev<0.7));
+  const si=p.phq9||p.siplan;
+  const mets=[];
+  if(waistHigh) mets.push('waist ≥90/80');
+  if((p.tg!=null&&p.tg>=150)||med('statin')) mets.push('TG ≥150');
+  if(p.hdl!=null&&(F?p.hdl<50:p.hdl<40)) mets.push('HDL low');
+  if((sbp!=null&&dbp!=null&&(sbp>=130||dbp>=85))||htnDx) mets.push('BP ≥130/85');
+  if((p.fpg!=null&&p.fpg>=100)||isDM) mets.push('FBG ≥100');
+  R.derived.mets=mets;
+  const risk=ascvd({age:p.age,sex:p.sex,tc:p.tc,hdl:p.hdl,sbp,onHtn:med('antihtn'),smoker:p.smoker==='current',dm:isDM}); R.derived.ascvd=risk;
+  const establishedCVD=has('ihd')||has('cvevent')||has('mi90')||p.ecg==='mi';
+
+  const flag=(level,text,action,src)=>R.flags.push({level,text,action,src});
+  const refer=(to,why,urg)=>R.referrals.push({to,why,urg});
+  // ---- red flags (critical values)
+  if(p.fpg!=null&&(p.fpg>=250||p.fpg<=60)) flag('red',`Fasting glucose ${p.fpg} mg/dL`,'Same-day GP callback · DKA / HHS / hypoglycaemia workup',SRC.scan);
+  if(p.rbg!=null&&p.rbg>=300) flag('red',`Random glucose ${p.rbg} mg/dL`,'Same-day GP callback · DKA / HHS workup',SRC.scan);
+  if(p.hba1c!=null&&p.hba1c>=13) flag('red',`HbA1c ${p.hba1c}%`,'GP visit within 48 h · likely insulin · endocrinology referral',SRC.scan);
+  if(sbp!=null&&dbp!=null&&(sbp>=180||dbp>=120)){ flag('red',`BP ${sbp}/${dbp}${p.bpsym?' with symptoms':''}`,p.bpsym?'Hypertensive emergency · ER (Eka BSD / Harapan Kita) now':'Hypertensive urgency · immediate GP review · ER if not responding',SRC.ncd); refer('ER',`BP ≥180/120${p.bpsym?' + symptoms':''}`,'same day'); }
+  else if(sbp!=null&&dbp!=null&&(sbp>=180||dbp>=110)&&p.bpsym){ flag('red',`BP ${sbp}/${dbp} with symptoms`,'Hypertensive emergency · refer ER',SRC.scan); refer('ER','BP ≥180/110 with symptoms','same day'); }
+  if(p.k!=null&&(p.k<3.0||p.k>5.5)){ flag('red',`Potassium ${p.k} mmol/L`,'Same-day GP callback · arrhythmia risk · repeat + ECG',SRC.scan); if(p.k>5.5) refer('Nephrology','Refractory hyperkalaemia K⁺ >5.5','urgent'); }
+  if(eg!=null&&eg<30){ flag('red',`eGFR ${eg} mL/min/1.73m² (CKD stage ${ckdStage})`,'Urgent nephrology referral · dialysis planning · not Pratama scope',SRC.elig); refer('Nephrology','eGFR <30 · CKD stage 4–5','urgent'); }
+  if((p.alt!=null&&p.alt>200)||(p.ast!=null&&p.ast>200)) { flag('red',`ALT ${p.alt??'—'} / AST ${p.ast??'—'} U/L (>5× ULN)`,'Same-day GP callback · acute hepatitis workup · stop hepatotoxic drugs',SRC.scan); refer('Hepatology','Transaminases >5× ULN','urgent'); }
+  if(p.hb!=null&&p.hb<8) flag('red',`Hb ${p.hb} g/dL`,'Same-day GP callback · severe anaemia workup',SRC.scan);
+  if(p.plt!=null&&p.plt<50) flag('red',`Platelets ${p.plt} ×10⁹/L`,'Same-day GP callback · thrombocytopenia workup',SRC.scan);
+  if(p.wbc!=null&&(p.wbc>20||p.wbc<2)) flag('red',`WBC ${p.wbc} ×10⁹/L`,'Same-day GP callback · infection / malignancy workup',SRC.scan);
+  if(p.tg!=null&&p.tg>=1000){ flag('red',`Triglycerides ${p.tg} mg/dL`,'Urgent visit · pancreatitis risk · fenofibrate · internist',SRC.ref); refer('Internist / ER','TG ≥1000 · pancreatitis risk','urgent'); }
+  if(p.cxr==='mass'){ flag('red','Chest X-ray: mass / nodule','Urgent oncology / pulmonology referral',SRC.scan); refer('Oncology (Dharmais / Eka BSD)','Suspicious lesion on chest X-ray','urgent'); }
+  if(p.phq9||p.siplan){ flag('red',p.siplan?'Suicidal ideation with plan / intent':'PHQ-9 item 9 positive','Immediate GP / coach contact · safety plan · same-day psychiatry',SRC.scan); refer('Psychiatry',p.siplan?'Active suicidal ideation with plan':'PHQ-9 item 9 positive','same day'); }
+  else if(p.phq!=null&&p.phq>=20){ flag('red',`PHQ-9 ${p.phq} (severe)`,'Psychiatry referral within 1 week · not WMP-managed',SRC.elig); refer('Psychiatry','PHQ-9 ≥20','within 1 week'); }
+  if(p.ecg==='af'&&!has('af')){ flag('red','ECG: atrial fibrillation, not previously known','Cardiology · echo + anticoagulation decision',SRC.ref); refer('Cardiology','New AF on MCU ECG','urgent'); }
+  if(p.ecg==='mi'&&!has('cvevent')&&!has('ihd')){ flag('amber','ECG: Q waves / prior MI pattern, no history on file','Cardiology review before CMP enrolment',SRC.scan); refer('Cardiology','Unexplained infarct pattern on ECG','within 2 weeks'); }
+  if(p.ecg==='isch'){ flag('amber','ECG: ST-T ischaemic change','GP same week · cardiology if symptomatic',SRC.icd); refer('Cardiology','Ischaemic ECG change','within 2 weeks'); }
+  if(p.hbsag||p.hcv){ flag('amber',`${p.hbsag?'HBsAg':''}${p.hbsag&&p.hcv?' + ':''}${p.hcv?'anti-HCV':''} positive`,'Hepatology / infectious referral · excluded from NAFLD pathway',SRC.ref); refer('Hepatology',`Viral hepatitis serology positive`,'routine'); }
+  if(fb!=null&&fb>=2.67){ flag('amber',`FIB-4 ${fb} (≥2.67)`,'Hepatology for elastography / biopsy · not LKMP-managed',SRC.elig); refer('Hepatology','FIB-4 ≥2.67 advanced fibrosis likely','within 4 weeks'); }
+  if(p.hba1c!=null&&p.hba1c>=9.5&&p.hba1c<13){ flag('amber',`HbA1c ${p.hba1c}% (≥9.5)`,'Refer for insulin evaluation · continues DMP under co-management',SRC.ncd); refer('Endocrinology','HbA1c ≥9.5% · insulin candidate','within 2 weeks'); }
+  if(p.ldl!=null&&p.ldl>=190){ flag('amber',`LDL ${p.ldl} mg/dL (≥190)`,'High-intensity statin (atorvastatin, reserved) · FH workup',SRC.ncd); refer('Lipid clinic / cardiology','LDL ≥190 · suspect familial hypercholesterolaemia','routine'); }
+  if(p.tsh!=null&&p.tsh<0.4){ flag('amber',`TSH ${p.tsh} (suppressed)`,'Hyperthyroidism · endocrinology',SRC.elig); refer('Endocrinology','TSH suppressed','routine'); }
+  if(p.goiter==='nodule'){ flag('amber','Thyroid nodule on palpation','Ultrasound via Prodia · endocrinology FNA if TIRADS ≥4',SRC.elig); }
+  if(p.stopbang!=null&&p.stopbang>=3) flag('amber',`STOP-BANG ${p.stopbang} (≥3)`,'OSA suspicion · sleep clinic referral for HSAT',SRC.ref);
+  if(p.ua!=null&&p.ua>9&&ckd13) flag('amber',`Uric acid ${p.ua} with CKD`,'Start allopurinol per gout SOP · target <6',SRC.scan);
+  if(p.tsh!=null&&p.tsh>=4.5&&p.tsh<10&&!p.thysym&&!p.tpo) flag('yellow',`TSH ${p.tsh} (4.5–10, asymptomatic)`,'Repeat TSH + TPO in 6–8 weeks before LKMP',SRC.elig);
+
+  // ---- exclusions (shared + program-specific)
+  const X=R.exclusions;
+  if(ex('preg')) X.push({rule:'Pregnant or <4 weeks postpartum',route:'OB-GYN (HTN protocol if hypertensive · maternal medicine if diabetic)',recheck:'4 weeks postpartum'});
+  if(ex('ed')) X.push({rule:'Eating disorder within 12 months',route:'Psychiatry / eating-disorder team',recheck:'12 months from last episode'});
+  if(has('mi90')) X.push({rule:'CV event within 90 days without cardiologist clearance',route:'Cardiology · CMP once clearance documented',recheck:'90 days post-event'});
+  if(ex('tx')) X.push({rule:'Organ transplant within 6 months',route:'Transplant team',recheck:'6 months post-transplant'});
+  if(has('cancer')) X.push({rule:'Active major cancer treatment',route:'Oncology partner (Dharmais)',recheck:'On treatment completion'});
+  if(ex('bari')) X.push({rule:'Bariatric surgery within 6 months',route:'Bariatric team',recheck:'6 months post-op'});
+  if(ex('dialysis')||(eg!=null&&eg<30)) X.push({rule:'Dialysis or eGFR <30',route:'Nephrology',recheck:'—'});
+  if(p.siplan) X.push({rule:'Active suicidal ideation with plan or intent',route:'Psychiatry · same day',recheck:'On psychiatric clearance'});
+  if(has('t1')) X.push({rule:'Type 1 DM / insulin pump',route:'Endocrinology',recheck:'—',prog:'DMP'});
+  if(ex('panc')) X.push({rule:'Acute pancreatitis',route:'Internist',recheck:'On recovery',prog:'DMP'});
+  if(ex('dka')) X.push({rule:'DKA or severe hypoglycaemia within 30 days',route:'Endocrinology review',recheck:'30 days',prog:'DMP'});
+  if(med('steroid')) X.push({rule:'High-dose glucocorticoids affecting glycaemia',route:'GP review of steroid indication',recheck:'On taper',prog:'DMP'});
+  if(has('hf34')) X.push({rule:'Heart failure NYHA III–IV',route:'Cardiology',recheck:'On stabilisation',prog:'CMP'});
+  if(has('afnew')) X.push({rule:'New-onset / unstable AF',route:'Cardiology · rhythm assessment',recheck:'On rate control + anticoagulation',prog:'CMP'});
+  if(fb!=null&&fb>=2.67) X.push({rule:'FIB-4 ≥2.67',route:'Hepatology',recheck:'On elastography result',prog:'LKMP'});
+  if(p.tsh!=null&&p.tsh<0.4) X.push({rule:'Hyperthyroidism (TSH suppressed)',route:'Endocrinology',recheck:'On euthyroid',prog:'LKMP'});
+  if(has('bipolar')) X.push({rule:'Bipolar / psychosis',route:'Psychiatry',recheck:'—',prog:'WMP'});
+  if(p.phq!=null&&p.phq>=20) X.push({rule:'PHQ-9 ≥20',route:'Psychiatry',recheck:'On remission <20',prog:'WMP'});
+  if(p.phq9&&!p.siplan) X.push({rule:'PHQ-9 item 9 positive · suicide-positive screen is not WMP-managed',route:'Psychiatry · same day',recheck:'On psychiatric clearance',prog:'WMP'});
+  if(ex('sud')) X.push({rule:'Anxiety with substance-use comorbidity',route:'Addiction medicine',recheck:'—',prog:'WMP'});
+  if(p.fev!=null&&p.fev<0.7&&p.rev==null&&false){}
+  const sharedExcl=X.filter(x=>!x.prog).length>0;
+  const progExcl=c=>X.some(x=>x.prog===c);
+  if(p.age!=null&&p.age<18) X.unshift({rule:'Under 18 · adults only at M0',route:'Pediatric partner clinic',recheck:'Age 18'});
+
+  // ---- program eligibility (v3 six-program grid)
+  const P=R.programs; const mk=(status,reasons)=>({status,reasons});
+  const adult=p.age==null||p.age>=18;
+  // DMP
+  { const rs=[]; if(p.hba1c!=null&&p.hba1c>=6.5) rs.push(`HbA1c ${p.hba1c}% ≥6.5`); if(p.fpg!=null&&p.fpg>=126) rs.push(`FPG ${p.fpg} ≥126`); if(p.ogtt!=null&&p.ogtt>=200) rs.push(`OGTT ${p.ogtt} ≥200`); if(p.rbg!=null&&p.rbg>=200&&p.dmsym) rs.push(`Random ${p.rbg} ≥200 + symptoms`); if(has('dm')) rs.push('Diagnosis E10–E14 on file'); if(med('insulin')||med('oad')||med('glp')) rs.push('On A10 antidiabetic');
+    P.DMP=rs.length&&adult?mk(progExcl('DMP')?'excl':'yes',rs):mk('no',[]); }
+  // DPP
+  { const rs=[]; const bmiOK=bmi!=null&&bmi>23;
+    if(!isDM){ if(p.hba1c!=null&&p.hba1c>=5.7&&p.hba1c<6.5) rs.push(`HbA1c ${p.hba1c}% (5.7–6.4)`); if(p.fpg!=null&&p.fpg>=100&&p.fpg<126) rs.push(`FPG ${p.fpg} (100–125)`); if(p.ogtt!=null&&p.ogtt>=140&&p.ogtt<200) rs.push(`OGTT ${p.ogtt} (140–199)`); if(has('predm')) rs.push('Self-reported prediabetes / GDM');
+      if(bmi!=null&&bmi>=25&&(htnConfirmed||htnCandidate||dyslip||nafld)) rs.push(`BMI ${bmi} ≥25 + metabolic comorbidity (E66 preventive arm)`);
+      if(bmi!=null&&bmi>27&&waistHigh&&!rs.length) rs.push(`BMI ${bmi} >27 + waist ${p.waist} cm (risk-screen proxy)`); }
+    let st='no'; if(rs.length&&adult){ st=bmiOK?'yes':'cand'; if(!bmiOK) rs.push(bmi==null?'BMI missing · needs BMI >23':`BMI ${bmi} is not >23 · GP judgement`); }
+    P.DPP=mk(st,rs); }
+  // HMP
+  { const rs=[]; if(bpHigh&&p.bpconf) rs.push(`Office BP ${sbp}/${dbp} confirmed on 2 occasions`); if(homeHigh) rs.push(`Home BP ${p.hsbp}/${p.hdbp} ≥135/85`); if(has('htn')) rs.push('Diagnosis I10 on file'); if(med('antihtn')) rs.push('On antihypertensive (C02/03/07/08/09)');
+    let st='no'; if(rs.length&&adult) st='yes'; else if(htnCandidate&&adult){ st='cand'; rs.push(`Office BP ${sbp}/${dbp} ≥140/90 · single reading · confirm at 2nd visit or 7-day home log`); }
+    P.HMP=mk(st,rs); }
+  // CMP
+  { const rs=[]; if((htnConfirmed||htnCandidate)&&p.ecg==='lvh') rs.push('I11 hypertensive heart disease (HTN + LVH on ECG)'); if((htnConfirmed||htnCandidate)&&((eg!=null&&eg>=30&&eg<60)||albumin)) rs.push('I12 hypertensive CKD (HTN + eGFR 30–60 or UACR ≥30)'); if(has('ihd')||(has('cvevent'))) rs.push('I25 stable IHD / post-event with clearance'); if(has('hf12')) rs.push('I50 heart failure NYHA I–II'); if(has('af')) rs.push('I48 stable AF on anticoagulation');
+    const dl=[]; if(p.ldl!=null&&p.ldl>130) dl.push(`LDL ${p.ldl} >130`); if(p.hdl!=null&&(F?p.hdl<50:p.hdl<40)) dl.push(`HDL ${p.hdl} low`); if(p.tg!=null&&p.tg>=150) dl.push(`TG ${p.tg} ≥150`); if(p.tc!=null&&p.tc>200) dl.push(`TC ${p.tc} >200`); if(nonhdl!=null&&nonhdl>160) dl.push(`non-HDL ${nonhdl} >160`); if(med('statin')) dl.push('on C10 statin'); if(has('dyslip')) dl.push('E78 on file');
+    if(dl.length) rs.push('E78 dyslipidaemia: '+dl.join(' · '));
+    P.CMP=rs.length&&adult?mk(progExcl('CMP')?'excl':'yes',rs):mk('no',[]); }
+  // LKMP
+  { const rs=[]; if(nafld){ rs.push(`K76.0 NAFLD: ${altHigh?'ALT '+p.alt:''}${altHigh&&astHigh?' / ':''}${astHigh?'AST '+p.ast:''}${p.usg==='steatosis'?' + steatosis on ultrasound':''}${fb!=null?' · FIB-4 '+fb:''}`); }
+    else if((altHigh||astHigh)&&p.usg!=='steatosis'&&!p.hbsag&&!p.hcv&&alcoholOK) rs.push(`Raised ${altHigh?'ALT '+p.alt:'AST '+p.ast} without imaging · order liver ultrasound (Prodia) · candidate K76.0`);
+    if(ckd13) rs.push(`N18 CKD stage ${ckdStage}: eGFR ${eg}${albumin?' + albuminuria':''}`);
+    if(hypo) rs.push(`E03 hypothyroidism: ${p.tsh!=null?'TSH '+p.tsh:''}${med('levo')?' on levothyroxine':''}${has('hypothy')?' on file':''}`);
+    if(p.goiter==='goiter'&&(p.tsh==null||(p.tsh>=0.4&&p.tsh<4.5))) rs.push('E04 non-toxic goiter · ultrasound to confirm TIRADS ≤3');
+    const onlyCand=rs.length&&rs.every(r=>r.startsWith('Raised'));
+    P.LKMP=rs.length&&adult?mk(progExcl('LKMP')?'excl':(onlyCand?'cand':'yes'),rs):mk('no',[]); }
+  // WMP
+  { const rs=[]; if(copd) rs.push(`J44 COPD${p.fev!=null?' · FEV1/FVC '+p.fev:''}`); if(asthma) rs.push(`J45 asthma${p.rev!=null?' · reversibility '+p.rev+'%':''}`);
+    if(!si&&p.phq!=null&&p.phq>=10&&p.phq<20) rs.push(`F32/F33 depression · PHQ-9 ${p.phq} (moderate)`); else if(has('mdd')||(med('ssri')&&!si)) rs.push('MDD on file / SSRI maintenance');
+    if(p.gad!=null&&p.gad>=10) rs.push(`F41 anxiety · GAD-7 ${p.gad}`); else if(has('anx')) rs.push('Anxiety disorder on file');
+    if(med('inhaler')&&!copd&&!asthma) rs.push('On R03 inhaler · confirm diagnosis with spirometry');
+    P.WMP=rs.length&&adult?mk(progExcl('WMP')?'excl':'yes',rs):mk('no',[]); }
+  if(sharedExcl){ for(const c of Object.keys(P)) if(P[c].status==='yes'||P[c].status==='cand') P[c].status='excl'; }
+  const enrolled=Object.keys(P).filter(c=>P[c].status==='yes');
+  const candidates=Object.keys(P).filter(c=>P[c].status==='cand');
+  R.capitation=enrolled.length>0;
+
+  // ---- stage ladders (NCD guidelines)
+  const S=R.findings; const st=(domain,value,stage,color,text)=>S.push({domain,value,stage,color,text});
+  if(p.hba1c!=null||p.fpg!=null){ const a=p.hba1c; const v=a!=null?`HbA1c ${a}%`:`FPG ${p.fpg}`;
+    if(isDM){ if(a!=null&&a>=9.5) st('Glucose',v,'T2D uncontrolled','red','Refer for insulin evaluation'); else if(a!=null&&a>=7) st('Glucose',v,'T2D suboptimal','amber','Titrate formulary · HbA1c monthly until target'); else st('Glucose',v,'T2D controlled','amber','Continue · HbA1c every 3–6 months'); }
+    else if(preDM) st('Glucose',v,'Prediabetes','yellow','Lifestyle program · OGTT if HbA1c near 6.5');
+    else st('Glucose',v,'Normal','green','Annual screening'); }
+  if(sbp!=null&&dbp!=null){ const v=`${sbp}/${dbp}`; if(sbp>=180||dbp>=120) st('Blood pressure',v,'Crisis','red','Immediate referral'); else if(sbp>=160||dbp>=100) st('Blood pressure',v,'Severe HTN','red','Dual therapy · monthly follow-up'); else if(sbp>=140||dbp>=90) st('Blood pressure',v,'Stage 2','amber','Start Rx now (amlodipine first line)'); else if(sbp>=130||dbp>=80) st('Blood pressure',v,'Stage 1 / elevated','yellow','Lifestyle · recheck 3 months'); else if(sbp>=120) st('Blood pressure',v,'Elevated','yellow','Lifestyle · recheck'); else st('Blood pressure',v,'Normal','green','Annual screen'); }
+  if(bmi!=null){ const c=R.derived.bmiCat; st('BMI',`${bmi}`,c[0],c[1],mets.length>=3?`Metabolic syndrome (${mets.length}/5)`:`MetS criteria ${mets.length}/5`); }
+  if(p.ldl!=null){ const v=`LDL ${p.ldl}`; if(p.ldl>=190) st('Lipids',v,'Very high','red','High-intensity statin · FH workup'); else if(p.ldl>=160) st('Lipids',v,'High','amber','Statin start + lifestyle'); else if(p.ldl>=130) st('Lipids',v,'Borderline high','amber','Lifestyle 3–6 mo · treat if ASCVD ≥7.5%'); else if(p.ldl>=100) st('Lipids',v,'Near-optimal','yellow','Lifestyle · yearly'); else st('Lipids',v,'Optimal','green','Re-screen 5 yr'); }
+  if(eg!=null){ const v=`eGFR ${eg}`; if(eg<30) st('Kidney',v,`CKD ${ckdStage}`,'red','Nephrology'); else if(eg<60) st('Kidney',v,`CKD ${ckdStage}`,'amber','LKMP · BP <130/80 · repeat creatinine 3 mo'); else if(albumin) st('Kidney',v,`CKD ${ckdStage} (A2+)`,'amber','Albuminuria · ACE-i/ARB · LKMP'); else st('Kidney',v,'Normal','green','Annual creatinine + ACR'); }
+  if(p.alt!=null||p.ast!=null){ const v=`ALT ${p.alt??'—'} · AST ${p.ast??'—'}`; if(altHigh||astHigh) st('Liver',v,nafld?'NAFLD':'Raised transaminases',fb!=null&&fb>=2.67?'red':'amber',fb!=null?`FIB-4 ${fb}`:'Order ultrasound + platelets for FIB-4'); else st('Liver',v,'Normal','green','Baseline · annual on statin'); }
+  if(p.phq!=null){ const v=`PHQ-9 ${p.phq}`; if(si||p.phq>=20) st('Mood',v,'Severe / safety','red','Same-day escalation'); else if(p.phq>=10) st('Mood',v,'Moderate','amber','WMP · GP-initiated SSRI or refer'); else if(p.phq>=5) st('Mood',v,'Mild','yellow','Coach + GP watchful · reassess 2–4 wk'); else st('Mood',v,'Minimal','green','Rescreen quarterly'); }
+  if(p.gad!=null){ const v=`GAD-7 ${p.gad}`; if(p.gad>=15) st('Anxiety',v,'Severe','red','Psychiatry within 1 week'); else if(p.gad>=10) st('Anxiety',v,'Moderate','amber','WMP'); else if(p.gad>=5) st('Anxiety',v,'Mild','yellow','Coach + watchful'); else st('Anxiety',v,'Minimal','green','Rescreen quarterly'); }
+  if(p.smoker==='current') st('Tobacco','Current','Active smoker','amber',p.motiv!=null&&p.motiv>=6?'Cessation program · NRT':'Brief advice · assess motivation');
+
+  // ---- wellness tier (5-tier, MCU Scanner May 2026 definitions)
+  const redFlags=R.flags.filter(f=>f.level==='red').length;
+  const chronicCount=[isDM,htnConfirmed,dyslip].filter(Boolean).length;
+  let tier,why;
+  if(redFlags||has('cancer')||has('mi90')||has('hf34')||has('afnew')){ tier='red'; why=redFlags?`${redFlags} critical value${redFlags>1?'s':''} tripped`:'Active malignancy / recent CV event / decompensated cardiac condition'; }
+  else if(chronicCount>=3||(p.hba1c!=null&&p.hba1c>9)||(p.ldl!=null&&p.ldl>190)||(eg!=null&&eg>=30&&eg<60)||(isDM&&(albumin||establishedCVD))||(sbp!=null&&(sbp>=160||(dbp!=null&&dbp>=100)))){ tier='amber'; why=chronicCount>=3?'DM + HTN + dyslipidaemia together':(p.hba1c!=null&&p.hba1c>9)?`HbA1c ${p.hba1c}% >9`:(eg!=null&&eg<60)?`eGFR ${eg} (30–60)`:(p.ldl!=null&&p.ldl>190)?`LDL ${p.ldl} >190`:(isDM&&(albumin||establishedCVD))?'Diabetes with complication (ACR ≥30 / MACE history)':`BP ${sbp}/${dbp} severe`; }
+  else if(enrolled.some(c=>c!=='DPP')||candidates.includes('HMP')){ tier='yellow'; why='One or more confirmed chronic conditions: '+enrolled.filter(c=>c!=='DPP').concat(candidates.includes('HMP')?['HMP (to confirm)']:[]).join(', '); }
+  else if(enrolled.includes('DPP')||candidates.includes('DPP')||preDM||bpElevated||(p.ldl!=null&&p.ldl>=130)||(bmi!=null&&bmi>=25)||p.smoker==='current'||nafld||R.flags.length){ tier='lime'; why='Pre-disease or lifestyle risk, no chronic diagnosis yet'; }
+  else { tier='green'; why='All MCU markers within normal · no red flags · no lifestyle high-risk'; }
+  R.tier={key:tier,...TIERS[tier],why};
+
+  // ---- dr. William protocol 2.2 pathway
+  const PR=R.protocol;
+  PR.push({title:'Common to every enrolled member · enrolment day one',cadence:'Enrolment · every follow-up · annual review (month 12)',labs:'HbA1c · urea + creatinine with eGFR · lipid panel (LDL) · SGOT / SGPT · urinalysis (qualitative ACR on dipstick) · 12-lead ECG read into record',exam:'Height, weight, BMI, body composition (Tanita MC-780MA) · waist · BP to protocol · head-to-toe · skin · thyroid palpation',rx:'Molecule-based OGB formulary · brand at pharmacy discretion',confirm:['Annual liver function for all vs baseline + statin-only repeat','Coach contact daily via app, monthly coach review']});
+  const dmComplicated=isDM&&(albumin||(eg!=null&&eg<60)||establishedCVD);
+  if(isDM&&!dmComplicated) PR.push({title:'Row 3 · Type 2 diabetes without complications',cadence:'Doctor every 3 months · 5 visits in year one (enrolment, M3, M6, M9, M12)',labs:'HbA1c every 3 or 6 months at a scheduled visit · capillary glucose each visit · annual urine protein · retinal screening referred out annually',exam:'Diabetic foot exam at enrolment + annual (monofilament, vibration, pulses, reflexes) · foot inspection each visit',rx:'Metformin IR 500 mg BID first line (eGFR before start, annual) → 850 mg BID · gliclazide 80 mg second line (preferred over glimepiride) · gliquidone in mild CKD · simvastatin 10 mg freely · atorvastatin reserved for secondary prevention · vitamin B complex on metformin · insulin → endocrinology',confirm:['HbA1c interval: 3 vs 6 months','Acarbose and DPP-4 (priced above fee; carried as prescribed-not-covered?)']});
+  if(dmComplicated) PR.push({title:'Row 4 · Type 2 diabetes with complications (ACR ≥30, eGFR <60, or MACE history)',cadence:'Monthly until target, then every 3 months · 7 visits in year one (enrolment, M1, M2, M3, M6, M9, M12)',labs:'HbA1c monthly until target then every 3–6 months · creatinine repeat early if falling · referred out: retinal screening + echocardiography',exam:'As row 3 plus what the specific complication requires',rx:'As row 3 plus SGLT2 inhibitor where indicated at eGFR ≤60 · prescribed here, dispensed and billed outside the membership',confirm:['HbA1c that places a member here: 8% or 9%','Numeric target and number of monthly visits before interval loosens','Trigger for repeating creatinine before 12 months']});
+  if(preDM||(P.DPP.status!=='no'&&!isDM)) PR.push({title:preDM?'Row 2 · Prediabetes':'Row 1 · Obesity and metabolic syndrome',cadence:'3 doctor visits in year one · enrolment, month 6, month 12',labs:'HbA1c once a year as screening for conversion · OGTT if HbA1c near 6.5',exam:preDM?'Common enrolment only':'Body composition at every visit',rx:'Lifestyle modification only · no routine pharmacotherapy · simvastatin where lipid targets require · GLP-1 not covered',confirm:['Visit cadence for this group','Whether metformin is used in prediabetes and on what threshold (SOP 6 says BMI ≥30 or HbA1c 6.0–6.4 or prior GDM)','Criteria for moving a member to another pathway']});
+  if(htnConfirmed||htnCandidate) PR.push({title:'Row 5 · Hypertension',cadence:'Monthly until controlled, then every 3 months · 5–6 visits in year one',labs:'Common panel covers comorbidity screen (kidney, liver, lipids, repeat ECG) · HbA1c not indicated as monitoring',exam:'Confirm diagnosis and exclude white-coat: repeated readings checked against member\'s own home device · home BP log review each visit',rx:'Amlodipine 5/10 mg first line → losartan 50 mg (default ARB) second → add HCT 25 mg third · bisoprolol fourth or coronary disease · captopril available · candesartan reserved for HF, valsartan for post-infarct',confirm:['BP at which each step is taken (SOP: start Rx at ≥140/90 or any DM/CKD comorbidity)','Home-monitoring frequency and the reading that brings a member in early','Creatinine + potassium after starting ACE-i/ARB (K⁺ not on test list)']});
+  if(P.CMP.status==='yes'&&dyslip) PR.push({title:'Dyslipidaemia (CMP) · NCD guideline draft',cadence:'Lipid recheck 6–8 weeks after statin start, then annual · SGOT/SGPT 6 weeks post-start',labs:'Lipid panel · ALT/AST · CK before statin (baseline) and on myalgia · TSH baseline',exam:'BP · BMI each visit',rx:establishedCVD?'Secondary prevention: atorvastatin 20 mg (reserved) · aspirin low dose TO CONFIRM · LDL target <55':(p.ldl!=null&&p.ldl>=190)?'High-intensity atorvastatin · FH workup':`Simvastatin 10–20 mg if ASCVD ≥7.5% or LDL ≥160 or diabetes · LDL target ${isDM||ckd13?'<70':'<100'} · fenofibrate if TG >500`,confirm:['Rosuvastatin on formulary','Aspirin low dose']});
+  if(P.LKMP.status!=='no') PR.push({title:'LKMP · liver / kidney / thyroid (Clinical Reference)',cadence:'Quarterly review · annual FIB-4 and KFRE',labs:nafld?'LFT + FIB-4 at week 12 and 6 months · HBsAg / anti-HCV once':ckd13?'Creatinine + eGFR and UACR every 3–6 months · K⁺ on ACE-i/ARB':'TSH 6–8 weeks after dose change, then annual',exam:'BP target <130/80 (CKD) · weight',rx:nafld?'7–10% weight loss · manage DM/lipids/BP per SOP · no alcohol':ckd13?'ACE-i / ARB (losartan) if albuminuria · avoid NSAIDs · statin':'Levothyroxine · TSH target 0.5–2.5',confirm:['LKMP rows are not yet in protocol 2.2 (Tier 2) · cadence to be drafted with dr. William']});
+  if(P.WMP.status!=='no') PR.push({title:'WMP · respiratory / mental wellness (Clinical Reference)',cadence:'PHQ-9 / GAD-7 quarterly via app · ACT / CAT each visit · spirometry annual',labs:'TSH if not done (rule out thyroid cause)',exam:'Inhaler technique each visit · SpO₂',rx:'Sertraline 50 mg first line (escitalopram alt) · salbutamol / budesonide / bud-formoterol · tiotropium for COPD · Q9 positive escalates same day',confirm:['Mental-health severe range: refer psychiatrist vs escalate chief coach vs both','WMP rows not yet in protocol 2.2']});
+  if(p.smoker==='current') PR.push({title:'Smoking cessation (Tier 1 reversal track)',cadence:'12-week program · weekly coach sessions',labs:'—',exam:'Spirometry if dyspnoea or >10 pack-years',rx:'NRT · varenicline added to formulary at M6 · bupropion if no seizure / eating-disorder history',confirm:[]});
+
+  // ---- risk drivers for cohort aggregation
+  const D=R.drivers; if(isDM) D.push('diabetes'); if(preDM) D.push('prediabetes'); if(htnConfirmed||htnCandidate) D.push('hypertension'); if(bpElevated) D.push('elevated BP'); if(dyslipLab) D.push('dyslipidaemia'); if(bmi!=null&&bmi>=25) D.push('obesity (BMI ≥25)'); if(p.smoker==='current') D.push('smoking'); if(nafld||altHigh) D.push('raised ALT / NAFLD'); if(ckd13||albumin) D.push('CKD / albuminuria'); if(p.phq!=null&&p.phq>=10) D.push('depression (PHQ ≥10)'); if(p.gad!=null&&p.gad>=10) D.push('anxiety (GAD ≥10)'); if(hypo) D.push('hypothyroid'); if(mets.length>=3) D.push('metabolic syndrome');
+
+  // ---- patient-facing Bahasa report
+  const B=R.patient; const nm=p.name||'Anggota';
+  B.push(`Hasil MCU Anda · ${nm}`); B.push(`Tingkat: ${({red:'Merah · perlu tindakan segera',amber:'Oranye · perlu perhatian',yellow:'Kuning · perlu pendampingan',lime:'Hijau muda · pencegahan',green:'Hijau · sehat'})[tier]}`); B.push('');
+  B.push('Apa yang kami temukan');
+  if(p.hba1c!=null) B.push(isDM?`• HbA1c ${p.hba1c}% — di atas batas normal (≤ 6,4%). Gula darah Anda tinggi selama 3 bulan terakhir. Tindak lanjut: konsultasi dokter dalam 7 hari · mulai Program Manajemen Diabetes.`:preDM?`• HbA1c ${p.hba1c}% — sedikit di atas normal (5,7–6,4%). Belum diabetes, tapi berisiko. Tindak lanjut: Program Pencegahan Diabetes.`:`• HbA1c ${p.hba1c}% — normal · pertahankan.`);
+  else if(p.fpg!=null) B.push(isDM?`• Gula darah puasa ${p.fpg} mg/dL — tinggi (normal < 100). Tindak lanjut: konsultasi dokter dalam 7 hari.`:preDM?`• Gula darah puasa ${p.fpg} mg/dL — sedikit tinggi (100–125). Tindak lanjut: program pencegahan.`:`• Gula darah puasa ${p.fpg} mg/dL — normal.`);
+  if(sbp!=null&&dbp!=null) B.push(bpHigh?`• Tekanan darah ${sbp}/${dbp} — tinggi (normal < 140/90). Tindak lanjut: catat tekanan darah pagi dan sore selama 7 hari · konsultasi dokter.`:bpElevated?`• Tekanan darah ${sbp}/${dbp} — sedikit tinggi. Kurangi garam · cek ulang 3 bulan.`:`• Tekanan darah ${sbp}/${dbp} — normal.`);
+  if(p.ldl!=null) B.push(p.ldl>130?`• Kolesterol LDL ${p.ldl} — di atas normal (< 130). ${p.ldl>=190?'Perlu obat dan pemeriksaan lanjutan.':'Bisa diperbaiki dengan pola makan dan aktivitas · dokter akan menilai perlu obat atau tidak.'}`:`• Kolesterol LDL ${p.ldl} — normal.`);
+  if(p.tg!=null&&p.tg>=150) B.push(`• Trigliserida ${p.tg} — tinggi (normal < 150). Kurangi gula, nasi berlebih, dan gorengan.`);
+  if(eg!=null) B.push(eg<60?`• Fungsi ginjal (eGFR ${eg}) — menurun. Dokter akan memantau lebih ketat.`:`• Fungsi ginjal (eGFR ${eg}) — normal · pertahankan.`);
+  if(p.alt!=null||p.ast!=null) B.push((altHigh||astHigh)?`• Fungsi hati (SGPT ${p.alt??'—'} / SGOT ${p.ast??'—'}) — di atas normal. ${p.usg==='steatosis'?'USG menunjukkan perlemakan hati. Turun berat badan 7–10% adalah pengobatan utamanya.':'Perlu USG hati untuk memastikan penyebabnya.'}`:`• Fungsi hati — normal.`);
+  if(bmi!=null&&bmi>=25) B.push(`• Berat badan (BMI ${bmi}) — di atas batas sehat (< 25). Target: turun 5–7% dalam 6 bulan.`);
+  if(p.smoker==='current') B.push('• Merokok — faktor risiko terbesar yang bisa Anda ubah. Program berhenti merokok 12 minggu tersedia.');
+  if(p.phq!=null&&p.phq>=10) B.push('• Skrining suasana hati menunjukkan Anda mungkin sedang berat. Dokter dan coach Loop siap mendampingi — ini bagian dari program, bukan hal yang memalukan.');
+  B.push(''); B.push('Rencana Loop untuk Anda');
+  if(tier==='red') B.push('1. Dokter Loop akan menghubungi Anda HARI INI. Jika ada nyeri dada, sesak, sakit kepala hebat, atau lemas berat — segera ke IGD terdekat.');
+  else if(enrolled.length||candidates.length) B.push(`1. Konsultasi dokter dalam 7 hari — dokter akan memastikan diagnosis dan memulai rencana perawatan (${enrolled.concat(candidates).join(' + ')}).`);
+  else B.push('1. Tidak ada tindak lanjut medis khusus. MCU ulang tahun depan.');
+  if(enrolled.length||candidates.length){ B.push('2. Satu dokter tetap di Klinik Loop untuk semua kondisi Anda · obat generik berlogo tanpa biaya tambahan.'); B.push('3. Coach Loop akan menghubungi Anda dalam 24 jam · pantau harian lewat aplikasi.'); }
+  B.push(''); B.push('Yang bisa Anda lakukan sekarang'); B.push('• Jalan kaki 30 menit/hari, 5× seminggu · kurangi nasi sampai 1 porsi/makan · perbanyak sayur');
+  if(bpHigh||bpElevated) B.push('• Catat tekanan darah pagi + sore di aplikasi Loop');
+  B.push('• Jika ada gejala sakit kepala berat / nyeri dada / sesak napas — hubungi Loop atau IGD terdekat');
+  R.enrolled=enrolled; R.candidates=candidates; R.derived.isDM=isDM; R.derived.preDM=preDM; R.derived.htn=htnConfirmed||htnCandidate; R.derived.dyslip=dyslip; R.derived.ckdStage=ckdStage;
+  return R;
+}
+
+/* ======================= FORM I/O ======================= */
+const $=id=>document.getElementById(id);
+const NUMF=['age','height','weight','waist','alcohol','sbp','dbp','hsbp','hdbp','hr','hba1c','fpg','ogtt','rbg','tc','ldl','hdl','tg','creat','uacr','alt','ast','plt','ua','tsh','k','hb','wbc','fev','rev','phq','gad','stopbang','motiv'];
+const SELF=['sex','smoker','uprot','ecg','cxr','usg','goiter'];
+const CHKF=['bpconf','bpsym','dmsym','hbsag','hcv','tpo','thysym','phq9','siplan'];
+function buildChecks(id,list,prefix){ $(id).innerHTML=list.map(([k,l])=>`<label><input type="checkbox" id="${prefix}_${k}"> ${l}</label>`).join(''); }
+buildChecks('dxbox',DX,'dx'); buildChecks('medbox',MEDS,'med'); buildChecks('exbox',EXCL,'ex');
+function readForm(){ const p={name:$('name').value.trim(),dx:{},meds:{},excl:{}}; NUMF.forEach(k=>p[k]=num($(k).value)); SELF.forEach(k=>p[k]=$(k).value); CHKF.forEach(k=>p[k]=$(k).checked); DX.forEach(([k])=>p.dx[k]=$('dx_'+k).checked); MEDS.forEach(([k])=>p.meds[k]=$('med_'+k).checked); EXCL.forEach(([k])=>p.excl[k]=$('ex_'+k).checked); return p; }
+function fillForm(p){ $('f').reset(); $('name').value=p.name||''; NUMF.forEach(k=>$(k).value=p[k]??''); SELF.forEach(k=>{ if(p[k]!==undefined) $(k).value=p[k]; }); CHKF.forEach(k=>$(k).checked=!!p[k]); DX.forEach(([k])=>$('dx_'+k).checked=!!(p.dx&&p.dx[k])); MEDS.forEach(([k])=>$('med_'+k).checked=!!(p.meds&&p.meds[k])); EXCL.forEach(([k])=>$('ex_'+k).checked=!!(p.excl&&p.excl[k])); }
+
+/* ======================= RENDER: SINGLE ======================= */
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function renderSingle(p,R){
+  const d=R.derived; const T=R.tier;
+  const kpi=(l,v,s)=>`<div class="kpi"><div class="l">${l}</div><div class="v">${v??'—'}</div><div class="s">${s||''}</div></div>`;
+  let h=`<div class="tierband"><div class="tierdot" style="background:${T.c}">${T.key}</div><div><h3>${T.n}</h3><p>${esc(T.why)}</p><p><strong>Loop action:</strong> ${T.a}</p></div></div>`;
+  h+=`<div class="kpis">${kpi('BMI',d.bmi,d.bmiCat?d.bmiCat[0]:'')}${kpi('eGFR',d.egfr,d.ckdStage?'CKD-EPI 2021 · G'+d.ckdStage:'')}${kpi('FIB-4',d.fib4,d.fib4==null?'needs AST, ALT, platelets':d.fib4<1.3?'low fibrosis risk':d.fib4<2.67?'indeterminate':'advanced')}${kpi('MetS',d.mets.length+'/5',d.mets.join(' · ')||'IDF 2005 criteria')}${kpi('ASCVD 10-yr',d.ascvd!=null?d.ascvd+'%':'—',d.ascvd==null?'age 40–79, TC, HDL, SBP':'PCE · uncalibrated, indicative')}${kpi('Non-HDL',d.nonhdl,'target <160')}</div>`;
+  // flags
+  h+=`<div class="block"><h3>Critical values and red flags <span class="src">${R.flags.length} tripped</span></h3>`;
+  h+=R.flags.length?`<ul class="list">${R.flags.map(f=>`<li class="${f.level}"><span class="tag">${f.level.toUpperCase()}</span><div>${esc(f.text)}<span class="act">${esc(f.action)}</span><span class="why">${f.src}</span></div></li>`).join('')}</ul>`:`<ul class="list"><li class="green"><span class="tag">CLEAR</span><div>No critical value tripped.</div></li></ul>`;
+  h+=`</div>`;
+  // programs
+  h+=`<div class="block"><h3>Program eligibility · v3 six-program grid <span class="src">${R.capitation?'Capitation cohort member':'Not in capitation cohort'}</span></h3><div class="progs">`;
+  for(const pr of PROGRAMS){ const s=R.programs[pr.code]; const cls={yes:'yes',cand:'cand',no:'no',excl:'excl'}[s.status]; const lbl={yes:'Eligible',cand:'Candidate · confirm',no:'Not met',excl:'Excluded'}[s.status];
+    h+=`<div class="prog ${cls}"><div class="code">${pr.code} · ${pr.tier}</div><div class="name">${pr.name}</div><span class="st">${lbl}</span><div class="why" style="font-size:11px;color:var(--muted)">${pr.icd}</div>${s.reasons.length?`<ul>${s.reasons.map(r=>`<li>${esc(r)}</li>`).join('')}</ul>`:''}</div>`; }
+  h+=`</div>${R.enrolled.length>1?`<p class="note">Multi-program enrolment: ${R.enrolled.join(' + ')} · one GP runs the case · member counts once in the capitation cohort.</p>`:''}</div>`;
+  // exclusions + referrals
+  if(R.exclusions.length){ h+=`<div class="block"><h3>Exclusions · "Loop is not the right fit right now" <span class="src">${SRC.elig} §10</span></h3><ul class="list">${R.exclusions.map(x=>`<li class="red"><span class="tag">${x.prog||'ALL'}</span><div>${esc(x.rule)}<span class="act">→ ${esc(x.route)}</span><span class="why">Re-check: ${esc(x.recheck)}</span></div></li>`).join('')}</ul></div>`; }
+  if(R.referrals.length){ h+=`<div class="block"><h3>Referral coordination · J11 / Tier 4 <span class="src">Loop owns the handoff</span></h3><ul class="list">${R.referrals.map(x=>`<li class="navy"><span class="tag">${esc(x.urg)}</span><div><strong>${esc(x.to)}</strong><span class="why">${esc(x.why)}</span></div></li>`).join('')}</ul></div>`; }
+  // stages
+  h+=`<div class="block"><h3>Stage ladders <span class="src">${SRC.ncd}</span></h3><div class="stages">${R.findings.map(f=>`<div class="stage ${f.color}"><div class="l">${f.domain}</div><div class="v">${esc(f.value)}</div><div class="n">${esc(f.stage)}</div><div class="why" style="font-size:11px;color:var(--ink-2)">${esc(f.text)}</div></div>`).join('')||'<p class="note">Enter labs to stage.</p>'}</div></div>`;
+  // protocol
+  h+=`<div class="block"><h3>Care pathway · ${SRC.proto} <span class="src">visit cadence · labs · formulary</span></h3><div class="proto">${R.protocol.map(c=>`<div class="card"><h4>${esc(c.title)}</h4><dl><dt>Visits</dt><dd>${esc(c.cadence)}</dd><dt>Labs</dt><dd>${esc(c.labs)}</dd><dt>Exam</dt><dd>${esc(c.exam)}</dd><dt>Formulary</dt><dd>${esc(c.rx)}</dd>${c.confirm.length?`<dt>Open</dt><dd class="confirm">TO CONFIRM with dr. William: ${c.confirm.map(esc).join(' · ')}</dd>`:''}</dl></div>`).join('')}</div></div>`;
+  // patient report
+  h+=`<div class="block"><h3>Member report · Bahasa-first draft <span class="src">pushed to app within 24 h after GP sign-off</span></h3><div class="report" id="rep">${esc(R.patient.join('\n'))}</div><div class="btns"><button type="button" class="ghost small" id="copyrep">Copy report</button></div></div>`;
+  $('out').innerHTML=h;
+  $('copyrep').addEventListener('click',()=>copyText(R.patient.join('\n'),'Report copied'));
+}
+
+/* ======================= SAMPLES ======================= */
+const SAMPLES=[
+ {name:'Budi Santoso (example)',age:47,sex:'M',height:168,weight:82,waist:96,smoker:'current',motiv:7,sbp:152,dbp:96,bpconf:true,hba1c:7.8,fpg:142,tc:215,ldl:145,hdl:38,tg:190,creat:0.95,uacr:18,alt:48,ast:36,plt:240,ua:7.4,tsh:2.1,k:4.2,hb:14.5,wbc:7.1,ecg:'normal',usg:'steatosis',phq:6,gad:4,stopbang:4,dx:{},meds:{},excl:{}},
+ {name:'Siti Rahayu (example)',age:34,sex:'F',height:158,weight:68,waist:86,smoker:'never',sbp:128,dbp:82,hba1c:5.9,fpg:108,tc:198,ldl:128,hdl:52,tg:140,creat:0.7,alt:22,ast:20,plt:290,tsh:2.8,k:4.0,hb:12.8,phq:3,gad:5,dx:{},meds:{},excl:{}},
+ {name:'Agus Wijaya (example)',age:58,sex:'M',height:165,weight:74,waist:94,smoker:'former',sbp:164,dbp:102,bpconf:true,hsbp:152,hdbp:94,hba1c:9.6,fpg:188,tc:240,ldl:160,hdl:36,tg:210,creat:1.6,uacr:120,alt:30,ast:28,plt:210,ua:8.1,tsh:3.1,k:4.9,hb:13.2,ecg:'lvh',phq:12,gad:8,dx:{dm:true,htn:true},meds:{oad:true,antihtn:true},excl:{}},
+ {name:'Dewi Lestari (example)',age:29,sex:'F',height:162,weight:54,waist:72,smoker:'never',sbp:112,dbp:72,hba1c:5.2,fpg:88,tc:170,ldl:95,hdl:62,tg:80,creat:0.65,alt:18,ast:19,plt:300,tsh:1.9,k:4.1,hb:13.0,phq:1,gad:2,dx:{},meds:{},excl:{}},
+ {name:'Rudi Hartono (example)',age:52,sex:'M',height:170,weight:91,waist:104,smoker:'current',motiv:3,sbp:186,dbp:118,bpsym:true,hba1c:11.2,fpg:262,dmsym:true,tc:250,ldl:172,hdl:33,tg:420,creat:1.3,uacr:260,alt:62,ast:55,plt:160,ua:9.3,tsh:2.2,k:5.7,hb:13.8,ecg:'isch',phq:16,phq9:true,gad:12,stopbang:6,dx:{},meds:{},excl:{}},
+ {name:'Ratna Dewi (example)',age:45,sex:'F',height:155,weight:71,waist:88,smoker:'never',sbp:138,dbp:88,hba1c:6.2,fpg:112,tc:228,ldl:150,hdl:48,tg:165,creat:0.8,alt:58,ast:40,plt:220,tsh:7.8,tpo:true,thysym:true,k:4.3,hb:11.9,usg:'steatosis',phq:11,gad:13,dx:{},meds:{},excl:{}}
+];
+$('samples').innerHTML=SAMPLES.map((s,i)=>`<button type="button" data-i="${i}">${esc(s.name.replace(' (example)',''))}</button>`).join('');
+$('samples').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; fillForm(SAMPLES[+b.dataset.i]); run(); });
+function run(){ const p=readForm(); const R=analyze(p); renderSingle(p,R); }
+$('f').addEventListener('submit',e=>{e.preventDefault();run();});
+$('clear').addEventListener('click',()=>{ $('f').reset(); $('out').innerHTML='<div class="block"><p class="note">Sheet cleared. Enter MCU values or pick an example member.</p></div>'; });
+$('copyjson').addEventListener('click',()=>copyText(JSON.stringify(readForm(),null,1),'JSON copied'));
+function copyText(t,msg){ const done=()=>toast(msg); if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(done).catch(()=>fallbackCopy(t,done)); } else fallbackCopy(t,done); }
+function fallbackCopy(t,done){ const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');done();}catch(e){toast('Select and copy manually');} ta.remove(); }
+let tt; function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('show'),1800); }
+
+/* ======================= COHORT ======================= */
+const COLS=['id','name','age','sex','height_cm','weight_kg','waist_cm','smoker','sbp','dbp','bp_confirmed','hsbp','hdbp','hba1c','fpg','ogtt','tc','ldl','hdl','tg','creatinine','uacr','alt','ast','platelets','uric_acid','tsh','k','hb','wbc','ecg','cxr','usg','fev1_fvc','phq9','phq9_q9','gad7','stopbang','dx','meds'];
+$('colspec').textContent=COLS.join(', ');
+function parseCSV(text){ const rows=[]; let row=[],cell='',q=false; for(let i=0;i<text.length;i++){ const c=text[i]; if(q){ if(c==='"'){ if(text[i+1]==='"'){cell+='"';i++;} else q=false; } else cell+=c; } else { if(c==='"') q=true; else if(c===','){row.push(cell);cell='';} else if(c==='\n'||c==='\r'){ if(c==='\r'&&text[i+1]==='\n') i++; row.push(cell); rows.push(row); row=[]; cell=''; } else cell+=c; } } if(cell!==''||row.length){row.push(cell);rows.push(row);} return rows.filter(r=>r.some(x=>x.trim()!=='')); }
+const DXMAP={dm:'dm',diabetes:'dm',t1:'t1',predm:'predm',prediabetes:'predm',gdm:'predm',htn:'htn',hypertension:'htn',dyslip:'dyslip',dyslipidemia:'dyslip',ihd:'ihd',mi90:'mi90',cvevent:'cvevent',stroke:'cvevent',mi:'cvevent',hf12:'hf12',hf:'hf12',hf34:'hf34',af:'af',afnew:'afnew',ckd:'ckd',nafld:'nafld',hypothy:'hypothy',hypothyroid:'hypothy',copd:'copd',asthma:'asthma',mdd:'mdd',depression:'mdd',anx:'anx',anxiety:'anx',cancer:'cancer',bipolar:'bipolar',gout:'gout',pregnant:'__preg',dialysis:'__dialysis'};
+const MEDMAP={insulin:'insulin',oad:'oad',metformin:'oad',su:'oad',glimepiride:'oad',gliclazide:'oad',dpp4:'oad',glp1:'glp',glp:'glp',sglt2:'glp',antihtn:'antihtn',amlodipine:'antihtn',losartan:'antihtn',captopril:'antihtn',hct:'antihtn',bisoprolol:'antihtn',arb:'antihtn',acei:'antihtn',ccb:'antihtn',statin:'statin',simvastatin:'statin',atorvastatin:'statin',anticoag:'anticoag',warfarin:'anticoag',doac:'anticoag',levo:'levo',levothyroxine:'levo',inhaler:'inhaler',ics:'inhaler',laba:'inhaler',lama:'inhaler',ssri:'ssri',sertraline:'ssri',snri:'ssri',steroid:'steroid'};
+function rowToPatient(hdr,r){ const g=k=>{ const i=hdr.indexOf(k); return i<0?'':(r[i]??'').trim(); }; const yes=v=>/^(1|y|yes|true|ya)$/i.test(v);
+  const p={name:g('name')||g('id')||'',dx:{},meds:{},excl:{}}; p.age=num(g('age')); const sx=g('sex').toUpperCase(); p.sex=(sx.startsWith('F')||sx==='P')?'F':'M'; p.height=num(g('height_cm')||g('height')); p.weight=num(g('weight_kg')||g('weight')); p.waist=num(g('waist_cm')||g('waist'));
+  const sm=g('smoker').toLowerCase(); p.smoker=(sm==='current'||yes(sm))?'current':sm==='former'?'former':'never'; p.alcohol=num(g('alcohol'));
+  p.sbp=num(g('sbp')); p.dbp=num(g('dbp')); p.bpconf=yes(g('bp_confirmed')); p.hsbp=num(g('hsbp')); p.hdbp=num(g('hdbp')); p.bpsym=yes(g('bp_symptoms'));
+  p.hba1c=num(g('hba1c')); p.fpg=num(g('fpg')||g('fbs')); p.ogtt=num(g('ogtt')||g('2hpp')); p.rbg=num(g('rbg')); p.dmsym=yes(g('dm_symptoms'));
+  p.tc=num(g('tc')); p.ldl=num(g('ldl')); p.hdl=num(g('hdl')); p.tg=num(g('tg')); p.creat=num(g('creatinine')||g('creat')); p.uacr=num(g('uacr')||g('acr')); p.uprot=g('uprot'); p.alt=num(g('alt')||g('sgpt')); p.ast=num(g('ast')||g('sgot')); p.plt=num(g('platelets')||g('plt')); p.ua=num(g('uric_acid')||g('ua')); p.tsh=num(g('tsh')); p.k=num(g('k')||g('potassium')); p.hb=num(g('hb')); p.wbc=num(g('wbc'));
+  p.hbsag=yes(g('hbsag')); p.hcv=yes(g('hcv')); p.tpo=yes(g('tpo')); p.thysym=yes(g('thyroid_symptoms'));
+  p.ecg=g('ecg').toLowerCase(); p.cxr=g('cxr').toLowerCase(); p.usg=g('usg').toLowerCase()==='fatty'?'steatosis':g('usg').toLowerCase(); p.fev=num(g('fev1_fvc')); p.rev=num(g('reversibility')); p.goiter=g('goiter');
+  p.phq=num(g('phq9')); p.phq9=yes(g('phq9_q9')); p.siplan=yes(g('si_plan')); p.gad=num(g('gad7')); p.stopbang=num(g('stopbang')); p.motiv=num(g('motivation'));
+  g('dx').split(/[;|]/).map(s=>s.trim().toLowerCase()).filter(Boolean).forEach(t=>{ const m=DXMAP[t]; if(!m) return; if(m==='__preg') p.excl.preg=true; else if(m==='__dialysis') p.excl.dialysis=true; else p.dx[m]=true; });
+  g('meds').split(/[;|]/).map(s=>s.trim().toLowerCase()).filter(Boolean).forEach(t=>{ const m=MEDMAP[t]; if(m) p.meds[m]=true; });
+  ['preg','ed','tx','bari','dialysis','dka','panc','sud'].forEach(k=>{ if(yes(g('excl_'+k))) p.excl[k]=true; });
+  return p; }
+let lastResults=null;
+function runCohort(){ const rows=parseCSV($('csv').value); if(rows.length<2){ $('cohortOut').innerHTML='<div class="block"><p class="note">Need a header row plus at least one member row.</p></div>'; return; }
+  const hdr=rows[0].map(h=>h.trim().toLowerCase()); const out=[]; for(let i=1;i<rows.length;i++){ const p=rowToPatient(hdr,rows[i]); const R=analyze(p); out.push({p,R}); }
+  lastResults=out; renderCohort(out); }
+function renderCohort(out){ const n=out.length; const tc={red:0,amber:0,yellow:0,lime:0,green:0}; const pc={DPP:0,DMP:0,HMP:0,CMP:0,LKMP:0,WMP:0}; const cand={}; let cap=0,excl=0,refs=0,flags=0; const drv={};
+  for(const {R} of out){ tc[R.tier.key]++; for(const c in R.programs){ if(R.programs[c].status==='yes') pc[c]++; if(R.programs[c].status==='cand') cand[c]=(cand[c]||0)+1; } if(R.capitation) cap++; if(R.exclusions.length) excl++; if(R.referrals.length) refs++; if(R.flags.some(f=>f.level==='red')) flags++; for(const d of R.drivers) drv[d]=(drv[d]||0)+1; }
+  const pct=v=>n?Math.round(v/n*100):0;
+  let h=`<div class="kpis">`+[['Members',n,''],['Capitation cohort',cap,pct(cap)+'% qualify for ≥1 program'],['Red tier · same-day',tc.red,pct(tc.red)+'%'],['Any referral out',refs,pct(refs)+'% · target <20%'],['Excluded now',excl,'re-check scheduled'],['Multi-program',out.filter(o=>o.R.enrolled.length>1).length,'one GP per member']].map(([l,v,s])=>`<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join('')+`</div>`;
+  h+=`<div class="block"><h3>Wellness-tier distribution <span class="src">${SRC.scan} · HR dashboard view</span></h3><div class="bar">${['red','amber','yellow','lime','green'].filter(k=>tc[k]).map(k=>`<div style="flex:${tc[k]};background:${TIERS[k].c}" title="${TIERS[k].n}: ${tc[k]}">${pct(tc[k])}%</div>`).join('')}</div><div class="legend">${['green','lime','yellow','amber','red'].map(k=>`<span><i style="background:${TIERS[k].c}"></i>${TIERS[k].n} · ${tc[k]}</span>`).join('')}</div><p class="note">Brief to dr. William assumed Green 40–50 / Yellow 30–35 / Red 20–25 for an industrial-estate cohort; this cohort reads ${pct(tc.green)} / ${pct(tc.lime+tc.yellow)} / ${pct(tc.amber+tc.red)} on the same three-band view.</p></div>`;
+  h+=`<div class="block"><h3>Program demand <span class="src">${SRC.elig} · multi-program counts each program line separately</span></h3><div class="drivers">${PROGRAMS.map(pr=>`<div class="driver"><div class="v">${pc[pr.code]}${cand[pr.code]?` <span style="font-size:12px;color:var(--t-yellow)">+${cand[pr.code]} to confirm</span>`:''}</div><div class="l">${pr.code} · ${pr.name}</div><div class="track"><i style="width:${pct(pc[pr.code])}%"></i></div></div>`).join('')}</div></div>`;
+  const dr=Object.entries(drv).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  h+=`<div class="block"><h3>Top risk drivers <span class="src">feeds employer wellness initiatives</span></h3><div class="drivers">${dr.map(([k,v])=>`<div class="driver"><div class="v">${pct(v)}%</div><div class="l">${esc(k)} · ${v}</div><div class="track"><i style="width:${pct(v)}%"></i></div></div>`).join('')||'<p class="note">No drivers detected.</p>'}</div></div>`;
+  h+=`<div class="block"><h3>Member routing table <span class="src">GP review queue · Red first</span></h3><div class="tablewrap"><table><thead><tr><th>Member</th><th>Age/Sex</th><th>Tier</th><th>Programs</th><th>BMI</th><th>BP</th><th>HbA1c</th><th>LDL</th><th>eGFR</th><th>Red flags</th><th>Refer to</th><th>Exclusion</th></tr></thead><tbody>`;
+  const order={red:0,amber:1,yellow:2,lime:3,green:4};
+  out.slice().sort((a,b)=>order[a.R.tier.key]-order[b.R.tier.key]).forEach(({p,R})=>{ h+=`<tr><td>${esc(p.name||'—')}</td><td class="num">${p.age??'—'}/${p.sex}</td><td><span class="pill" style="background:${R.tier.c}">${R.tier.key}</span></td><td>${R.enrolled.join(' + ')||'—'}${R.candidates.length?` <span style="color:var(--t-yellow)">(${R.candidates.join(',')}?)</span>`:''}</td><td class="num">${R.derived.bmi??'—'}</td><td class="num">${p.sbp!=null?p.sbp+'/'+p.dbp:'—'}</td><td class="num">${p.hba1c??'—'}</td><td class="num">${p.ldl??'—'}</td><td class="num">${R.derived.egfr??'—'}</td><td>${R.flags.filter(f=>f.level==='red').map(f=>esc(f.text)).join('; ')||'—'}</td><td>${[...new Set(R.referrals.map(r=>r.to))].map(esc).join('; ')||'—'}</td><td>${R.exclusions.map(x=>esc(x.rule)).join('; ')||'—'}</td></tr>`; });
+  h+=`</tbody></table></div></div>`;
+  $('cohortOut').innerHTML=h; }
+function resultsCSV(){ if(!lastResults) return ''; const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"'; const lines=[['member','age','sex','tier','capitation','programs','candidates','bmi','egfr','fib4','mets','ascvd','red_flags','referrals','exclusions','drivers'].join(',')];
+  for(const {p,R} of lastResults) lines.push([p.name,p.age,p.sex,R.tier.key,R.capitation?1:0,R.enrolled.join('+'),R.candidates.join('+'),R.derived.bmi,R.derived.egfr,R.derived.fib4,R.derived.mets.length,R.derived.ascvd,R.flags.filter(f=>f.level==='red').map(f=>f.text).join('; '),[...new Set(R.referrals.map(r=>r.to))].join('; '),R.exclusions.map(x=>x.rule).join('; '),R.drivers.join('; ')].map(q).join(','));
+  return lines.join('\n'); }
+$('runCohort').addEventListener('click',runCohort);
+$('copyResults').addEventListener('click',()=>{ if(!lastResults){toast('Run a cohort first');return;} copyText(resultsCSV(),'Results CSV copied'); });
+$('csvfile').addEventListener('change',e=>{ const f=e.target.files[0]; if(!f) return; handleUpload([f]); e.target.value=''; });
+// seeded synthetic cohort
+function mulberry(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function sampleCohort(){ const rnd=mulberry(20261014); const N=80; const first=['Budi','Siti','Agus','Dewi','Rudi','Ratna','Hendra','Yuni','Eko','Fitri','Andi','Lina','Joko','Maya','Bayu','Nur','Dian','Rizal','Wati','Tono']; const last=['Santoso','Rahayu','Wijaya','Lestari','Hartono','Pratama','Sari','Kusuma','Saputra','Hidayat'];
+  const norm=(m,s)=>m+s*(rnd()+rnd()+rnd()-1.5)*1.63; const rows=[COLS.join(',')];
+  for(let i=0;i<N;i++){ const sex=rnd()<0.62?'M':'F'; const age=Math.round(22+rnd()*38); const h=Math.round(norm(sex==='M'?167:156,6)); const bmi=Math.max(17,norm(25.2,4)); const w=Math.round(bmi*(h/100)**2); const waist=Math.round((sex==='M'?82:72)+(bmi-22)*2.6+norm(0,4));
+    const dmP=0.08+(age-22)*0.004+(bmi>27?0.06:0); const dm=rnd()<dmP; const pre=!dm&&rnd()<0.22+(bmi>25?0.08:0); const a1c=dm?r1(Math.max(6.5,norm(7.9,1.4))):pre?r1(5.7+rnd()*0.7):r1(Math.min(5.6,norm(5.3,0.25)));
+    const fpg=Math.round(dm?Math.max(126,norm(160,30)):pre?100+rnd()*25:Math.min(99,norm(88,7)));
+    const htn=rnd()<0.14+(age-22)*0.006+(bmi>27?0.08:0); const sbp=Math.round(htn?Math.max(140,norm(152,12)):norm(119,9)); const dbp=Math.round(htn?Math.max(90,norm(94,6)):norm(76,6));
+    const smoker=sex==='M'?(rnd()<0.52?'current':rnd()<0.3?'former':'never'):(rnd()<0.04?'current':'never');
+    const tc=Math.round(norm(200,35)); const hdl=Math.round(Math.max(25,norm(sex==='M'?42:50,9))); const tg=Math.round(Math.max(50,norm(bmi>25?175:130,60))); const ldl=Math.round(Math.max(50,tc-hdl-tg/5));
+    const creat=r1(Math.max(0.5,norm(sex==='M'?0.95:0.75,0.18)+(dm&&rnd()<0.2?0.5:0))*10)/10; const uacr=Math.round(dm&&rnd()<0.3?30+rnd()*200:htn&&rnd()<0.15?30+rnd()*60:rnd()*25);
+    const alt=Math.round(Math.max(8,norm(bmi>25?38:24,14))); const ast=Math.round(Math.max(8,alt*0.75+norm(0,6))); const plt=Math.round(norm(260,50)); const ua=r1(norm(sex==='M'?6.3:4.8,1.2)); const tsh=r1(Math.max(0.3,Math.exp(norm(0.7,0.5)))*100)/100; const k=r1(norm(4.2,0.35)); const hb=r1(norm(sex==='M'?14.5:12.6,1.2)); const wbc=r1(norm(7,1.6));
+    const phq=Math.max(0,Math.round(norm(5,4.5))); const q9=phq>=12&&rnd()<0.12?1:0; const gad=Math.max(0,Math.round(norm(4,4))); const sb=Math.max(0,Math.min(8,Math.round(norm(bmi>28?3.4:1.6,1.3))));
+    const dx=[]; const meds=[]; if(dm&&rnd()<0.6){dx.push('dm'); if(rnd()<0.8) meds.push('metformin');} if(htn&&rnd()<0.5){dx.push('htn'); if(rnd()<0.7) meds.push('amlodipine');} if(ldl>160&&rnd()<0.2) meds.push('statin'); if(rnd()<0.03) dx.push('asthma'); if(age>50&&rnd()<0.04) dx.push('ihd');
+    const ecg=rnd()<0.9?'normal':htn&&rnd()<0.5?'lvh':rnd()<0.3?'af':'other'; const usg=alt>40&&rnd()<0.6?'fatty':'';
+    rows.push([`E${String(1001+i)}`,`${first[Math.floor(rnd()*first.length)]} ${last[Math.floor(rnd()*last.length)]}`,age,sex,h,w,waist,smoker,sbp,dbp,htn?(rnd()<0.6?'y':'n'):'n','','',a1c,fpg,'',tc,ldl,hdl,tg,creat,uacr,alt,ast,plt,ua,tsh,k,hb,wbc,ecg,rnd()<0.01?'mass':'normal',usg,'',phq,q9,gad,sb,dx.join(';'),meds.join(';')].join(',')); }
+  return rows.join('\n'); }
+$('sampleCohort').addEventListener('click',()=>{ $('csv').value=sampleCohort(); runCohort(); toast('Synthetic cohort loaded · not real members'); });
+
+/* ======================= RULE BOOK ======================= */
+function renderRules(){
+  const rows=[
+   ['Critical','FBS ≥250 or ≤60 mg/dL','Same-day GP callback · DKA / HHS / hypoglycaemia',SRC.scan],
+   ['Critical','HbA1c ≥13%','GP within 48 h · insulin · endocrinology',SRC.scan],
+   ['Critical','BP ≥180/120 (any) · ≥180/110 with symptoms','Immediate refer · ER if symptomatic',SRC.ncd+' · '+SRC.scan],
+   ['Critical','K⁺ <3.0 or >5.5 mmol/L','Same-day callback · ECG · nephrology if refractory',SRC.scan+' · '+SRC.ref],
+   ['Critical','eGFR <30','Nephrology · excluded from Pratama scope',SRC.elig],
+   ['Critical','ALT / AST >5× ULN (ULN 40)','Same-day callback · hepatitis workup',SRC.scan],
+   ['Critical','Hb <8 · platelets <50 · WBC >20 or <2','Same-day callback',SRC.scan],
+   ['Critical','TG ≥1000 mg/dL','Urgent · pancreatitis risk · fenofibrate',SRC.ref],
+   ['Critical','Chest X-ray mass / nodule','Urgent oncology / pulmonology',SRC.scan],
+   ['Critical','PHQ-9 item 9 positive · SI with plan · PHQ-9 ≥20','Same-day psychiatry · not WMP-managed',SRC.scan+' · '+SRC.elig],
+   ['Critical','New AF on ECG','Cardiology · echo + anticoagulation',SRC.ref],
+   ['DMP','HbA1c ≥6.5 · FPG ≥126 · OGTT ≥200 · random ≥200 + symptoms · E10–E14 · A10 meds','Enrol DMP (Tier 1)',SRC.elig+' §4'],
+   ['DPP','BMI >23 AND (HbA1c 5.7–6.4 · FPG 100–125 · OGTT 140–199 · self-reported prediabetes/GDM · BMI ≥25 + HTN/dyslip/NAFLD)','Enrol DPP (Tier 1) · lifestyle only',SRC.elig+' §3'],
+   ['HMP','Office ≥140/90 confirmed twice · home ≥135/85 · I10 · antihypertensive','Enrol HMP · single raised office reading = candidate, confirm',SRC.elig+' §5'],
+   ['CMP','HTN + LVH (I11) · HTN + eGFR 30–60 or UACR ≥30 (I12) · stable IHD · HF NYHA I–II · stable AF · LDL >130 / HDL <40 M <50 F / TG ≥150 / TC >200 / non-HDL >160 / statin (E78)','Enrol CMP (Tier 2)',SRC.elig+' §6'],
+   ['LKMP','ALT/AST raised + steatosis, alcohol <20 F / <30 M g/day, FIB-4 <2.67 (K76.0) · eGFR 30–90 + UACR ≥30 or eGFR 30–60 (N18 1–3) · TSH ≥10 or 4.5–10 + symptoms/TPO · levothyroxine (E03) · goiter TIRADS ≤3 (E04)','Enrol LKMP (Tier 2)',SRC.elig+' §7'],
+   ['WMP','FEV1/FVC <0.7 (J44) · reversibility ≥12% (J45) · PHQ-9 10–19 no SI (F32/33) · GAD-7 ≥10 (F41) · R03 / N06 therapy','Enrol WMP (Tier 2)',SRC.elig+' §8'],
+   ['Exclusion (all)','<18 · pregnant / <4 wk postpartum · eating disorder <12 mo · CV event <90 d without clearance · transplant <6 mo · active cancer tx · bariatric <6 mo · dialysis or eGFR <30 · SI with plan','"Loop is not the right fit right now" screen · referral path · re-check date',SRC.elig+' §10.1'],
+   ['Exclusion (program)','DMP: pancreatitis, DKA/severe hypo <30 d, high-dose steroid, T1 on pump · CMP: NYHA III–IV, new/unstable AF, symptomatic angina · LKMP: FIB-4 ≥2.67, eGFR <30, hyperthyroid, TIRADS ≥4 · WMP: GOLD 4, GINA 5, PHQ-9 ≥20, psychosis/bipolar, SUD','Refer named specialty · other programs continue',SRC.elig+' §10.2'],
+   ['Tier · Red','Any critical value · active malignancy · CV event <90 d · decompensated HF / unstable AF','Same-day GP · urgent referral',SRC.scan+' §4'],
+   ['Tier · Amber','DM + HTN + dyslipidaemia · HbA1c >9 · LDL >190 · eGFR 30–60 · diabetes with complication · BP ≥160/100','Enrol all qualifying programs · monthly until target',SRC.scan+' §4 · '+SRC.proto+' row 4'],
+   ['Tier · Yellow','One confirmed chronic disease (DMP/HMP/CMP/LKMP/WMP)','Quarterly cadence · dedicated GP',SRC.scan+' §4'],
+   ['Tier · Lime','Prediabetes · BP 130–139/85–89 · LDL 130–159 · BMI ≥25 · smoker · low-risk NAFLD','DPP / lifestyle · 3 visits in year one',SRC.scan+' §4 · '+SRC.proto+' rows 1–2'],
+   ['Tier · Green','All markers normal','Annual MCU · app content',SRC.scan+' §4'],
+   ['Protocol','Enrolment panel: HbA1c · urea/creatinine/eGFR · lipid · SGOT/SGPT · urinalysis · ECG · body composition · annual repeat','Common to all four diagnoses',SRC.proto],
+   ['Protocol','T2D uncomplicated: 5 visits/yr · HbA1c q3–6 mo · metformin IR → gliclazide · simvastatin free, atorvastatin reserved','Complication = ACR ≥30, eGFR <60 or MACE → row 4, 7 visits, HbA1c monthly, SGLT2 prescribed-not-covered',SRC.proto+' rows 3–4'],
+   ['Protocol','HTN: amlodipine → losartan → HCT → bisoprolol · monthly until controlled then q3 mo · home log','Candesartan / valsartan reserved (HF / post-MI) · Losartan-first saves ~Rp 4.8K/member/month',SRC.proto+' row 5 · ARB tree'],
+   ['Derived','eGFR = CKD-EPI 2021 (race-free) · FIB-4 = age×AST/(plt×√ALT) · MetS = IDF 2005, 3 of 5 with Asian waist 90/80 · ASCVD = PCE 2013 (indicative only, not Indonesia-calibrated)','Shown as KPIs',SRC.icd+' · '+SRC.ncd]
+  ];
+  const open=['HbA1c that places a member on the complicated-diabetes pathway: 8% or 9%','HbA1c interval for uncomplicated T2D: 3 or 6 months','Visit cadence for obesity / prediabetes rows and criteria for moving between pathways','Metformin in prediabetes: any threshold?','BP at which each HTN step is taken · home-monitoring frequency · the reading that brings a member in early','Creatinine + potassium after ACE-i/ARB start (K⁺ not on test list)','Acarbose · sitagliptin · rosuvastatin · low-dose aspirin on the formulary','Annual liver function for everyone vs baseline + statin-only repeat','Coach contact daily vs weekly (Loop program decision)','Mental-health severe range: psychiatrist vs chief coach vs both','Anchor HTN protocol to PNPK / PERKI or keep ISH 2020 / JNC 8','Stoplight three-band vs five-tier: which framework HR reports use'];
+  $('rulesOut').innerHTML=`<div class="block"><h3>Rule book · what the engine checks and where each threshold comes from</h3><div class="tablewrap"><table><thead><tr><th>Group</th><th>Rule</th><th>Action</th><th>Source</th></tr></thead><tbody>${rows.map(r=>`<tr><td><strong>${esc(r[0])}</strong></td><td>${esc(r[1])}</td><td>${esc(r[2])}</td><td style="color:var(--muted)">${esc(r[3])}</td></tr>`).join('')}</tbody></table></div></div>
+  <div class="block"><h3>Open with dr. William <span class="src">TO CONFIRM items carried from protocol 2.2 and the clinical brief</span></h3><ul class="list">${open.map((o,i)=>`<li class="amber"><span class="tag">${i+1}</span><div>${esc(o)}</div></li>`).join('')}</ul><p class="note">Where a threshold is still open, the engine uses the SOP v1 / Clinical Reference value and labels the pathway card TO CONFIRM. Change the constant in <code>analyze()</code> once dr. William signs.</p></div>
+  <div class="block"><h3>Superseded rules the engine deliberately does not use</h3><ul class="list"><li class="off navy"><span class="tag">v2</span><div>DPP / HMP eligibility at SBP ≥130 or DBP ≥80 (older DMP/DPP/HMP PDF). v3 (2026-06-10) moved HMP to ≥140/90 confirmed and routes 130–139/85–89 to lifestyle; kept here as Lime tier.</div></li><li class="off navy"><span class="tag">May 26</span><div>Journey codes J3–J11 and the 12-week J9 reversal tracks from the May scanner doc. The v3 grid and protocol 2.2 replace them with the six programs and per-row visit cadences; journey labels are not emitted.</div></li><li class="off navy"><span class="tag">Brief</span><div>Three-colour stoplight (Green / Yellow / Red) from the clinical brief. The five-tier scale is used; the cohort view shows the three-band roll-up alongside for comparison with the 40–50 / 30–35 / 20–25 assumption.</div></li></ul></div>`;
+}
+renderRules();
+
+/* ======================= UPLOAD + EXTRACTION ======================= */
+const samplerP=(window.claude&&typeof window.claude.use==='function')?window.claude.use('sample').catch(()=>null):Promise.resolve(null);
+const EXTRACT_PROMPT=`You are reading an Indonesian medical check-up (MCU) laboratory report for a clinical intake tool. Extract every value you can find into ONE JSON object with exactly these keys; use null when a value is absent. Numbers only (no units) after converting to the target unit.
+Keys: name (string), age (years), sex ("M" or "F"; Laki-laki/Pria=M, Perempuan/Wanita=F), height (cm), weight (kg), waist (cm; lingkar perut/pinggang), sbp, dbp (mmHg; "tekanan darah 130/85" -> sbp 130, dbp 85), hr (bpm; nadi), hba1c (% NGSP), fpg (mg/dL; gula darah puasa / GDP), ogtt (mg/dL; gula darah 2 jam PP / GD2PP / TTGO), rbg (mg/dL; gula darah sewaktu / GDS), tc (mg/dL kolesterol total), ldl, hdl, tg (mg/dL trigliserida), creat (mg/dL kreatinin), uacr (mg/g albumin-kreatinin urin), uprot ("neg","trace","pos" from urinalisis protein), alt (U/L SGPT), ast (U/L SGOT), plt (x10^9/L = ribu/uL trombosit), ua (mg/dL asam urat), tsh (mIU/L), k (mmol/L kalium), hb (g/dL hemoglobin), wbc (x10^9/L leukosit), hbsag (true/false), hcv (true/false), ecg (one of "normal","lvh","af","mi","isch","other" or null), cxr ("normal","mass","cardio","other" or null; rontgen thorax), usg ("normal","steatosis" or null; USG abdomen fatty liver / perlemakan hati = steatosis), smoker ("never","former","current" or null), dx (array from: dm, predm, htn, dyslip, ihd, cvevent, hf12, af, ckd, nafld, hypothy, copd, asthma, mdd, anx, cancer, gout), meds (array from: insulin, oad, glp, antihtn, statin, anticoag, levo, inhaler, ssri, steroid), notes (string: abnormal findings you could not map, conversions applied, anything the doctor should see).
+Unit conversions: glucose mmol/L x18; cholesterol, LDL, HDL mmol/L x38.67; triglycerides mmol/L x88.57; creatinine umol/L /88.4; platelets per uL /1000; HbA1c mmol/mol (IFCC) -> NGSP % = 0.0915*IFCC + 2.15. Ignore ureum/BUN, bilirubin, and reference ranges. If a value appears twice take the most recent. Reply with only the JSON object.`;
+function setUp(msg,err){ const s=$('upStatus'); s.textContent=msg; s.classList.toggle('err',!!err); }
+async function readPdf(file){ const lib=window.pdfjsLib; if(!lib) throw new Error('PDF reader did not load'); lib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; const doc=await lib.getDocument({data:await file.arrayBuffer()}).promise; let text=''; const n=Math.min(doc.numPages,8);
+  for(let i=1;i<=n;i++){ const pg=await doc.getPage(i); const tc=await pg.getTextContent(); let lastY=null,line=''; for(const it of tc.items){ const y=it.transform?Math.round(it.transform[5]):0; if(lastY!==null&&Math.abs(y-lastY)>3){ text+=line.trim()+'\n'; line=''; } line+=it.str+' '; lastY=y; } text+=line.trim()+'\n'; }
+  const imgs=[]; if(text.replace(/\s/g,'').length<150){ for(let i=1;i<=Math.min(n,4);i++){ const pg=await doc.getPage(i); const vp=pg.getViewport({scale:1.6}); const c=document.createElement('canvas'); c.width=vp.width; c.height=vp.height; await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise; imgs.push(await new Promise(r=>c.toBlob(r,'image/png'))); } }
+  return {text,imgs,pages:doc.numPages}; }
+function readSheet(file){ return new Promise((res,rej)=>{ const rd=new FileReader(); rd.onerror=()=>rej(new Error('Could not read file')); rd.onload=()=>{ try{ if(/\.csv$/i.test(file.name)){ res(String(rd.result)); return; } const wb=XLSX.read(rd.result,{type:'array'}); res(XLSX.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[0]])); }catch(e){ rej(e); } }; if(/\.csv$/i.test(file.name)) rd.readAsText(file); else rd.readAsArrayBuffer(file); }); }
+function applyExtracted(j){ const p={name:j.name||'',dx:{},meds:{},excl:{}}; NUMF.forEach(k=>p[k]=num(j[k])); p.sex=(String(j.sex||'M').toUpperCase().startsWith('F'))?'F':'M'; p.smoker=['never','former','current'].includes(j.smoker)?j.smoker:'never'; ['uprot','ecg','cxr','usg'].forEach(k=>p[k]=j[k]||''); p.goiter=''; p.hbsag=!!j.hbsag; p.hcv=!!j.hcv; (Array.isArray(j.dx)?j.dx:[]).forEach(d=>{ if(DX.some(([k])=>k===d)) p.dx[d]=true; }); (Array.isArray(j.meds)?j.meds:[]).forEach(m=>{ if(MEDS.some(([k])=>k===m)) p.meds[m]=true; }); fillForm(p); const got=NUMF.filter(k=>p[k]!=null).length; return got; }
+async function extractWithClaude(text,images){ const sampler=await samplerP; if(!sampler) throw {code:'not_granted'}; const opts={modelTier:'default'}; if(images&&images.length){ const lim=await sampler.limits().catch(()=>null); if(!lim||!lim.images) throw {code:'images_unavailable'}; opts.images=images.slice(0,lim.images.maxCount||4); }
+  const input=EXTRACT_PROMPT+(text?`\n\nREPORT TEXT:\n${text.slice(0,60000)}`:'\n\nThe report is in the attached image(s).'); return sampler.json(input,opts); }
+const ERRCOPY={not_granted:'Claude access was not allowed for this page, so uploads cannot be read. Enter the values by hand.',images_unavailable:'This viewer cannot send images to Claude. Upload a text PDF or enter values by hand.',image_rejected:'That image could not be used (type or size). Try a JPEG/PNG under 20 MB.',rate_limited:'Too many requests right now. Wait a minute and try again.',invalid_json:'Claude could not find lab values in that file. Check it is an MCU report, or enter values by hand.',refused:'Claude declined to read that file.',sampling_disabled:'Claude is not available on this account.'};
+async function handleUpload(files){ const list=Array.from(files||[]); if(!list.length) return; const imgs=list.filter(f=>/^image\//.test(f.type)); const pdfs=list.filter(f=>f.type==='application/pdf'||/\.pdf$/i.test(f.name)); const sheets=list.filter(f=>/\.(xlsx|xls|csv)$/i.test(f.name));
+  try{
+    if(sheets.length){ setUp('Reading spreadsheet…'); const csv=await readSheet(sheets[0]); const rows=parseCSV(csv); const hdr=(rows[0]||[]).map(h=>h.trim().toLowerCase()); const known=hdr.filter(h=>COLS.includes(h)).length;
+      if(rows.length>2&&known>=4){ $('csv').value=csv; $('tab-cohort').click(); runCohort(); setUp(`Cohort of ${rows.length-1} rows loaded into the Cohort tab.`); return; }
+      if(rows.length>2){ setUp('Columns not recognised · asking Claude to map them…'); const sampler=await samplerP; if(!sampler) throw {code:'not_granted'}; const map=await sampler.json(`Map the columns of this Indonesian MCU spreadsheet to these target names: ${COLS.join(', ')}. Reply with only a JSON object {"<source header>":"<target name>"} containing only confident matches.\n\nHEADER: ${rows[0].join(' | ')}\nROW 1: ${rows[1].join(' | ')}\nROW 2: ${(rows[2]||[]).join(' | ')}`,{modelTier:'quick'}); const nh=rows[0].map(h=>map[h]||map[h.trim()]||h); $('csv').value=[nh.join(',')].concat(rows.slice(1).map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(','))).join('\n'); $('tab-cohort').click(); runCohort(); setUp(`Cohort of ${rows.length-1} rows loaded with Claude's column mapping. Check the table.`); return; }
+      setUp('Single-member sheet · asking Claude to read it…'); const j=await extractWithClaude(csv,[]); const got=applyExtracted(j); run(); setUp(`Read ${got} values from the sheet. Check the fields, then re-run if you correct anything.${j.notes?'\nNotes: '+j.notes:''}`); return; }
+    let text='',images=[];
+    if(pdfs.length){ setUp('Reading PDF…'); for(const f of pdfs){ const r=await readPdf(f); text+=r.text+'\n'; images.push(...r.imgs); } }
+    images.push(...imgs);
+    if(!text.trim()&&!images.length){ setUp('Nothing readable in that file.',true); return; }
+    setUp(images.length?`Sending ${images.length} page image${images.length>1?'s':''} to Claude… (first use asks your permission)`:'Sending report text to Claude… (first use asks your permission)');
+    const j=await extractWithClaude(text,images); const got=applyExtracted(j); run(); setUp(`Read ${got} values. Check the sheet against the report before relying on the analysis.${j.notes?'\nNotes: '+j.notes:''}`);
+  }catch(e){ console.warn(e); setUp(ERRCOPY[e&&e.code]||('Could not read that file: '+(e&&(e.message||e.code)||'unknown error')),true); }
+  finally{ $('mcufile').value=''; } }
+$('mcufile').addEventListener('change',e=>handleUpload(e.target.files));
+{ const box=$('uploadBox'); ['dragenter','dragover'].forEach(ev=>box.addEventListener(ev,e=>{e.preventDefault();box.classList.add('drag');})); ['dragleave','drop'].forEach(ev=>box.addEventListener(ev,e=>{e.preventDefault();box.classList.remove('drag');})); box.addEventListener('drop',e=>handleUpload(e.dataTransfer.files)); }
+samplerP.then(s=>{ if(!s) setUp('Open this page in the Claude viewer to read uploads with Claude. Manual entry always works.'); });
+$('csvfile').setAttribute('accept','.csv,.xlsx,.xls,text/csv');
+
+/* ======================= TABS ======================= */
+document.querySelectorAll('nav.tabs button').forEach(b=>b.addEventListener('click',()=>{ document.querySelectorAll('nav.tabs button').forEach(x=>x.setAttribute('aria-selected',x===b)); ['single','cohort','rules'].forEach(t=>$('panel-'+t).hidden=(t!==b.dataset.tab)); }));
+if(location.hash==='#cohort') $('tab-cohort').click(); if(location.hash==='#rules') $('tab-rules').click();
+fillForm(SAMPLES[0]); run();
+</script>
+</body></html>

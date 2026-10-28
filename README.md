@@ -54,3 +54,20 @@ sells (DMP, DPP, HMP incl. cholesterol); the internal analyzer still shows the f
 
 The result is not a diagnosis. Thresholds must be signed off by dr. William before anything goes live
 (see the proof pack, item 2).
+
+## Staging
+
+| Environment | URL | Purpose |
+|---|---|---|
+| Live | https://stevetsurface.github.io/loop-site/ | What you share |
+| Staging | https://stevetsurface.github.io/loop-site/staging/ | Try changes first. Purple "STAGING" banner, `noindex` on every page. |
+
+Workflow, run from the project folder (the one that contains `loop-site/`):
+
+```bash
+python3 _funnel_build/build_repo.py staging   # rebuild loop-site/staging/ from the sources
+python3 _funnel_build/build_repo.py promote   # copy staging over the live pages, minus banner and noindex
+```
+
+Commit and push `loop-site/` after either step; GitHub Pages redeploys in about 30 seconds.
+Staging is unlisted, not private: anyone with the URL can open it.
