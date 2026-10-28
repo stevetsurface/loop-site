@@ -74,3 +74,15 @@ Estimated build: 2–3 days for an engineer who has the two artifact files. The 
 - **Loop 2.1 design pass** (`_funnel_build/patch_mobbin_round2.py`, references: Function, Superpower, Hims, Ease, Headspace on Mobbin): Fraunces serif display headlines with one italic teal accent phrase per headline; floating white pill nav (sticky, blurred); hero on sand with a divider-style trust strip; "how it works" as three Function-style cards with mini UI (upload drop zone, range-bar reading, plan list); bento "what you get" grid (Loop Kit, coach chat, app, member photo, navy checklist tile); result cards with full-width member photos; Function-style membership price card (price left, checklist right); footer as a card with logo, tagline and App Store / Google Play badges.
 - **No cholesterol program** (Steve, 26 Oct): HMP is the hypertension program only. Program names and offers no longer mention cholesterol anywhere on the site or the three upload pages; cholesterol stays as a lab marker in readings. In the funnel engine `PROG_ALIAS` is empty and CMP joins LKMP/WMP in the doctor-review note (`r.lk`), so a cholesterol-only finding is reviewed by the Loop doctor rather than mapped to a program. Patch: `_funnel_build/patch_no_cholesterol.py`.
 - Repo `stevetsurface/loop-site` is public with GitHub Pages at https://stevetsurface.github.io/loop-site/ (site, `cek-mcu.html`, `bisnis-mcu.html`, `asuransi-mcu.html`, `analyzer/`). Funnel pages there are wrapped copies of the project-root files with artifact links rewritten to relative paths and a plain-browser download fallback for the report.
+
+## Backlog · parked behind the proof gate (28 Oct 2026, from a review of lif.id)
+
+LIF (PT Living Fitness Indonesia) is a corporate-wellness competitor: smart ring + app, gamified challenges, sold on engagement. Loop sells clinical outcomes for the NCD cohort. Ideas worth borrowing, in priority order. None ship until the five proof items exist.
+
+1. **HR risk quiz (no data needed).** "Seberapa besar risiko diabetes & hipertensi di perusahaan Anda?" About 10 questions, one per screen, with a progress bar: age mix, shift work, last MCU date, known DM/HTN cases. Ends on an estimated at-risk share and a nudge to upload the MCU recap. Pattern: lif.id/insights/healthy-workspace-calculator (15 Likert questions in 3 stages).
+2. **PMPM estimator on Perusahaan.** Employee count in; PMPM, monthly and contract totals out, compared against the NCD-cohort share of claims. Pattern: lif.id/wellness-program-pricing (team-size slider, 3/6/12-month picker, discount struck through). **Blocked on Loop's PMPM figure.**
+3. **Gated case-study PDFs.** Lontar Papyrus, Indah Kiat, mQare as one-page before/after (HbA1c and BP control rates), unlocked by name + email.
+4. **Gated guide.** "Panduan MCU untuk HR": reading the vendor recap, handling red-flag employees, UU PDP obligations. Doubles as SEO.
+5. **One-question-per-screen** pattern for the personal funnel's contact gate.
+
+Do not copy: app-review star carousels, "3X productivity" or engagement-percentage hero stats. These are wellness-marketing claims that weaken the "not a diagnosis, see a doctor" positioning.
