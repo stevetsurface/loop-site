@@ -86,3 +86,14 @@ LIF (PT Living Fitness Indonesia) is a corporate-wellness competitor: smart ring
 5. **One-question-per-screen** pattern for the personal funnel's contact gate.
 
 Do not copy: app-review star carousels, "3X productivity" or engagement-percentage hero stats. These are wellness-marketing claims that weaken the "not a diagnosis, see a doctor" positioning.
+
+## Update 31 Oct 2026 · unified risk check on staging
+
+- **Why.** The live risk check is Typeform form `R7pHeBZ5`, embedded on loophealth.id/diabetes-calculator. It covers diabetes only. Known problems: European BMI/waist cut-offs, Q1 has no "Tidak" answer, no consent screen (see `loop-screening-vs-intake-comparison.md`). It is not in any GitHub repo.
+- **What.** `cek-risiko.html`, staging only (`_funnel_build/risk_check.py`, built when `SITE_STAGING=1`): https://stevetsurface.github.io/loop-site/staging/cek-risiko.html. One check, three programs. Up to 12 questions, one per screen, bilingual.
+  - Diabetes: FINDRISC's eight items with Asia-Pacific cut-offs (BMI 23/25; waist M 90/100 cm, F 80/90 cm). Score 0–26, bands <7 / 7–11 / 12–14 / 15–20 / >20.
+  - Hypertension: diagnosis, BP medication, last reading in bands (incl. "don't know" and ≥180/110).
+  - Routing: DMP fits if diagnosed or on diabetes medication (FINDRISC questions are then skipped, 7 questions total). DPP fits on known prediabetes or FINDRISC ≥12; "check first" at 7–11. HMP fits on diagnosis, BP medication or ≥140/90; "check first" at 130–139/80–89 or unknown reading. ≥180/110 shows a see-a-doctor-today banner.
+  - Nothing stored; result CTAs are the MCU upload and a WhatsApp message carrying the summary. No personal data collected, so no PDP consent screen needed at this step.
+- On staging the "Cek Risiko" buttons (home hero, footer) point here instead of the Typeform. Live site and Claude artifacts are unchanged.
+- **Before promoting:** dr. William signs off the Asian cut-offs and routing thresholds (same sign-off as the proof pack's threshold table). Decide whether the Typeform's lead fields (name, WhatsApp, province) are still wanted; if so they go after the result, with consent.

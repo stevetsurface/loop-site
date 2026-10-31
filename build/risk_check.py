@@ -41,7 +41,7 @@ RISK_JS = r"""
 const WA_NO='6281112588833', MCU_URL='""" + FUNNEL['personal'] + r"""';
 const T={
 id:{start:'Mulai cek risiko',back:'← Kembali',next:'Lanjut →',see:'Lihat hasil',of:'dari',q:'Pertanyaan',pick:'Pilih salah satu dulu.',pickm:'Pilih minimal satu.',hwErr:'Isi tinggi (100–220 cm) dan berat (30–250 kg).',
- intro:'<p class="rq-q">Tiga program, satu cek.</p><p class="rq-hint">12 pertanyaan singkat, sekitar 2 menit. Hasilnya menunjukkan program Loop mana yang cocok: <b>Manajemen Diabetes</b>, <b>Pencegahan Diabetes</b>, atau <b>Hipertensi</b>. Jawaban dihitung di browser Anda dan tidak disimpan.</p>',
+ intro:'<p class="rq-q">Tiga program, satu cek.</p><p class="rq-hint">Paling banyak 12 pertanyaan singkat, sekitar 2 menit. Hasilnya menunjukkan program Loop mana yang cocok: <b>Manajemen Diabetes</b>, <b>Pencegahan Diabetes</b>, atau <b>Hipertensi</b>. Jawaban dihitung di browser Anda dan tidak disimpan.</p>',
  qs:{dx:['Apakah dokter pernah mengatakan Anda punya salah satu kondisi ini?','Boleh pilih lebih dari satu.',{dm:'Diabetes',predm:'Prediabetes / gula darah agak tinggi',htn:'Hipertensi (tekanan darah tinggi)',none:'Tidak ada / tidak tahu'}],
   meds:['Apakah Anda sedang minum obat rutin untuk ini?','Boleh pilih lebih dari satu.',{dmMed:'Obat diabetes atau insulin',bpMed:'Obat tekanan darah',none:'Tidak minum obat rutin'}],
   age:['Berapa usia Anda?','',{a1:'Di bawah 35',a2:'35–44',a3:'45–54',a4:'55–64',a5:'65 atau lebih'}],
@@ -69,7 +69,7 @@ id:{start:'Mulai cek risiko',back:'← Kembali',next:'Lanjut →',see:'Lihat has
  disc:'Bukan diagnosis. Skor diabetes memakai FINDRISC dengan batas BMI dan lingkar pinggang Asia. Keputusan medis tetap oleh dokter.',
  wa:'Halo Loop, saya baru cek risiko di web Loop. Hasil: {r}. Saya mau konsultasi gratis.'},
 en:{start:'Start the risk check',back:'← Back',next:'Next →',see:'See my result',of:'of',q:'Question',pick:'Pick one first.',pickm:'Pick at least one.',hwErr:'Enter height (100–220 cm) and weight (30–250 kg).',
- intro:'<p class="rq-q">Three programs, one check.</p><p class="rq-hint">12 short questions, about 2 minutes. The result shows which Loop program fits: <b>Diabetes Management</b>, <b>Diabetes Prevention</b> or <b>Hypertension</b>. Your answers are computed in your browser and not stored.</p>',
+ intro:'<p class="rq-q">Three programs, one check.</p><p class="rq-hint">Up to 12 short questions, about 2 minutes. The result shows which Loop program fits: <b>Diabetes Management</b>, <b>Diabetes Prevention</b> or <b>Hypertension</b>. Your answers are computed in your browser and not stored.</p>',
  qs:{dx:['Has a doctor ever told you that you have any of these?','Pick all that apply.',{dm:'Diabetes',predm:'Prediabetes / slightly high blood sugar',htn:'Hypertension (high blood pressure)',none:'None / not sure'}],
   meds:['Do you take regular medication for any of these?','Pick all that apply.',{dmMed:'Diabetes medication or insulin',bpMed:'Blood-pressure medication',none:'No regular medication'}],
   age:['How old are you?','',{a1:'Under 35',a2:'35–44',a3:'45–54',a4:'55–64',a5:'65 or older'}],
@@ -168,10 +168,10 @@ render();
 """
 
 RISK_I18N = {"id": {"rk.eye": "Cek risiko gratis", "rk.h1": "Diabetes atau tekanan darah? <em>Satu cek</em>, tiga program.",
-                    "rk.lead": "Jawab 12 pertanyaan. Anda langsung melihat program Loop mana yang cocok, dan apa yang perlu dicek dulu.",
+                    "rk.lead": "Jawab paling banyak 12 pertanyaan. Anda langsung melihat program Loop mana yang cocok, dan apa yang perlu dicek dulu.",
                     "rk.note": "Dihitung di browser Anda, tidak ada data yang disimpan. Bukan diagnosis."},
              "en": {"rk.eye": "Free risk check", "rk.h1": "Diabetes or blood pressure? <em>One check</em>, three programs.",
-                    "rk.lead": "Answer 12 questions. You see straight away which Loop program fits, and what needs checking first.",
+                    "rk.lead": "Answer up to 12 questions. You see straight away which Loop program fits, and what needs checking first.",
                     "rk.note": "Computed in your browser, no data is stored. Not a diagnosis."}}
 
 page("cek-risiko.html", "Cek Risiko · Loop Health", "risk", RISK_BODY, RISK_I18N, RISK_JS)
