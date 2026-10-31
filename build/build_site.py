@@ -177,6 +177,8 @@ $('langId').addEventListener('click',()=>setLang('id')); $('langEn').addEventLis
 
 def page(filename, title, active, body, i18n, extra_js=""):
     merged = {L: {**SHARED_I18N[L], **i18n.get(L, {})} for L in ("id","en")}
+    if os.environ.get("SITE_STAGING"):  # staging only: unified risk check replaces the Typeform link
+        merged["id"].update({"ft.risk": "Cek Risiko", "h.cta2": "Cek Risiko Gratis"}); merged["en"].update({"ft.risk": "Risk Check", "h.cta2": "Free Risk Check"})
     doc = f'''<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>{title}</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,500..700;1,9..144,400..600&display=swap"><style>{CSS}</style></head><body>
 {header(active)}
@@ -184,6 +186,7 @@ def page(filename, title, active, body, i18n, extra_js=""):
 {footer()}
 {SCRIPT % (json.dumps(merged, ensure_ascii=False), extra_js)}
 </body></html>'''
+    if os.environ.get("SITE_STAGING"): doc = doc.replace("https://www.loophealth.id/diabetes-calculator", "cek-risiko.html")
     open(os.path.join(OUT, filename), "w").write(doc)
     used = set(re.findall(r'data-i18n(?:-ph)?="([^"]+)"', doc))
     missing = [k for k in used if k not in merged["id"] or k not in merged["en"]]
@@ -359,4 +362,6 @@ KO_I18N = {"id":{"ko.eye":"Konsultasi gratis","ko.h1":"Bicara dengan dokter Loop
   "ko.f.name":"Name","ko.f.wa":"WhatsApp number","ko.f.email":"Email (for the report)","ko.f.topic":"What you want to discuss","ko.o1":"My diabetes","ko.o2":"My blood pressure","ko.o3":"Prevention (prediabetes, weight)","ko.o4":"A program for my company","ko.o5":"Insurer / TPA partnership","ko.f.msg":"Notes (optional)","ko.consent":"I agree to be contacted by the Loop team on WhatsApp or email about this consultation. Data is not shared with anyone else.","ko.send":"Send","ko.wa":"Chat on WhatsApp","ko.need":"Fill in your name and WhatsApp number and tick the consent box first.","ko.sent":"Thank you. The Loop team will contact you within one working day. (Prototype: in production this form is saved to Supabase.)","ko.wamsg":"Hi Loop, I'm {name}. I'd like a free consultation about: {topic}.",
   "ko.n.h":"What happens after you send","ko.n.p":"Three steps, all free.","ko.n.1h":"The Loop team contacts you","ko.n.1p":"Within one working day, on WhatsApp or by phone, to schedule.","ko.n.2h":"Consultation with a doctor","ko.n.2p":"The doctor goes through your MCU results (if any) and picks the program that fits.","ko.n.3h":"Start, if you want to","ko.n.3p":"Membership starts only once you are sure. No pressure."}}
 page("konsultasi.html", "Konsultasi Gratis · Loop Health", "konsultasi", KO_BODY, KO_I18N, KO_JS)
+if os.environ.get("SITE_STAGING"):
+    exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "risk_check.py")).read())
 print("done")

@@ -37,6 +37,8 @@ def mark_staging(path):
 def build(out, staging):
     os.makedirs(os.path.join(out, "analyzer"), exist_ok=True)
     env = dict(os.environ, SITE_OUT=out, SITE_LOCAL="1")
+    if staging: env["SITE_STAGING"] = "1"
+    else: env.pop("SITE_STAGING", None)
     subprocess.run([sys.executable, os.path.join(B, "build_site.py")], env=env, check=True, stdout=subprocess.DEVNULL)
     for src, dst in FUNNELS: wrap(src, os.path.join(out, dst))
     wrap("Loop_MCU_Analyzer_Oct2026.html", os.path.join(out, "analyzer", "index.html"), "../")
